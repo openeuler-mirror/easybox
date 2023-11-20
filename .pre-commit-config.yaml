@@ -1,6 +1,6 @@
 fail_fast: true
 repos:
-  - repo: "https://github.com/pre-commit/pre-commit-hooks.git"
+  - repo: "https://gitee.com/overweight/pre-commit-hooks.git"
     rev: v4.4.0
     hooks:
       - id: check-byte-order-marker
@@ -14,12 +14,6 @@ repos:
       - id: detect-private-key
   #      - id: check-executables-have-shebangs
       # - id: check-shebang-scripts-are-executable
-  - repo: "https://github.com/codespell-project/codespell.git"
-    rev: v2.2.2
-    hooks:
-      - id: codespell
-        args: [-I, ci/codespell_ignore_words]
-        verbose: true
   # - repo: "https://github.com/psf/black.git"
   #   rev: 22.8.0
   #   hooks:
@@ -45,6 +39,13 @@ repos:
 
   - repo: local
     hooks:
+      - id: codespell
+        name: codespell
+        description: Checks for common misspellings in text files.
+        entry: bash -c 'cargo clean;codespell -I ci/codespell_ignore_words -x ci/codespell_ignore_words -S *.rules -S ./vendor* -S ./target*'
+        language: system
+        pass_filenames: false
+        verbose: true
       # - id: cargo-clippy
       #   name: cargo clippy
       #   description: Lint rust sources

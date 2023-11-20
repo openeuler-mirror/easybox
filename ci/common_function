@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+export rust_vendor="1.57.0"
+
+function test_fasturl()
+{
+    set +e
+    # Initialize minimum latency to a large value
+    min_latency=9999999
+    timeout=10
+    # Define the fastest source
+    fastest_source=""
+
+    local urls=("$@")
+
+    # Test each crate
+    for url in "${urls[@]}"; do
+        # Send an HTTP request to get crate information and measure the execution time
+        start_time=$(date +%s%N)
+        response=$(curl -s -o /dev/null --connect-timeout 1 -m 10 -w "%{time_total}" "$url" > /dev/null 2>&1)
+        if [ $? -ne 0 ]; then
+            continue
+        fi
+        end_time=$(date +%s%N)
+        # Calculate the request time in milliseconds
+        duration=$(( ($end_time - $start_time) / 1000000 ))
+        # Check if it's the fastest source
+        if [ "$duration" -lt "$min_latency" ]; then
+            min_latency="$duration"
+            fastest_source="$url"
+        fi
+    done
+    echo $fastest_source
+    set -e
+}
+
+contains_chinese() {
+    for rustlist in `git diff origin/master --name-only | grep \.rs$ | tr '\n' ' '`
+    do
+        grep -Pn '[\p{Han}]' $rustlist  && echo "DO NOT USE CHANESE CHARACTERS in code, 不要在源码中使用中文!" && exit 1
+    done
+    true
+}

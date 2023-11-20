@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $SCRIPT_DIR/common_function
 
 # Function to check if a file contains Chinese characters
 contains_chinese() {
@@ -111,6 +113,20 @@ git-fetch-with-cli = true
 EOF
 
 rm -rf  ~/.cargo/.package-cache
+
+sources=("https://521github.com/" "https://gitclone.com/github.com/" "https://gh.api.99988866.xyz/https://github.com/" "https://github.com/")
+url=$(test_fasturl ${sources[@]})
+git config --global url."${url}".insteadOf "https://github.com/"
+
+
+pipurls=("https://pypi.tuna.tsinghua.edu.cn/simple" "http://mirrors.aliyun.com/pypi/simple/" "https://pypi.mirrors.ustc.edu.cn/simple/" "http://pypi.sdutlinux.org/" "http://pypi.douban.com/simple/")
+url=$(test_fasturl ${pipurls[@]})
+
+if [[ $url =~ ^https?://([^/]+) ]]; then
+    domain="${BASH_REMATCH[1]}"
+    pip config set global.index-url $url
+    pip config set global.trusted-host $domain
+fi
 
 # #git加速并安装rust工具链
 # repo="https://github.com/rust-lang/release-team.git"
