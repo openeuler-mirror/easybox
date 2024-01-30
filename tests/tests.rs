@@ -8,3 +8,7 @@ mod test_base32;
 #[cfg(feature = "flock")]
 #[path = "by-util/test_flock.rs"]
 mod test_flock;
+
+#[cfg(feature = "pstree")]
+#[path = "by-util/test_pstree.rs"]
+mod test_pstree;
