@@ -12,3 +12,6 @@ mod test_flock;
 #[cfg(feature = "pstree")]
 #[path = "by-util/test_pstree.rs"]
 mod test_pstree;
+#[cfg(feature = "taskset")]
+#[path = "by-util/test_taskset.rs"]
+mod test_taskset;

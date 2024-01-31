@@ -1,0 +1,26 @@
+[package]
+name = "oe_taskset"
+version = "0.0.1"
+authors = ["openeuler developers"]
+license = "MulanPSL-2.0"
+description = "taskset ~ Show or change the CPU affinity of a process."
+
+homepage = "https://gitee.com/openeuler/easybox"
+repository = "https://gitee.com/openeuler/easybox/tree/master/src/oe/taskset"
+keywords = ["schedutils", "easybox", "util-linux", "cli", "utility"]
+categories = ["command-line-utilities"]
+edition = "2021"
+
+[lib]
+path = "src/taskset.rs"
+
+[dependencies]
+clap = { version = "3.2.0", features = ["wrap_help", "cargo"] }
+uucore = { version=">=0.0.16", package="uucore", path="../../uucore"}
+procfs = { version = "0.16.0", default-features = false }
+nix = { version = "0.27.1", features = ["sched"] }
+libc = "0.2.152"
+
+[[bin]]
+name = "taskset"
+path = "src/main.rs"
