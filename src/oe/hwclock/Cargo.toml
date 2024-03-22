@@ -1,0 +1,27 @@
+[package]
+name = "oe_hwclock"
+version = "0.0.1"
+authors = ["openeuler developers"]
+license = "MulanPSL-2.0"
+description = "hardware time clocks utility"
+
+homepage = "https://gitee.com/openeuler/easybox"
+repository = "https://github.com/uutils/coreutils/tree/main/src/oe/base32"
+keywords = ["coreutils", "easybox", "util-linux", "cli", "utility"]
+categories = ["command-line-utilities"]
+edition = "2021"
+
+[lib]
+path = "src/hwclock.rs"
+
+[dependencies]
+clap = { version = "3.2" }
+uucore = { version=">=0.0.16", package="uucore", path="../../uucore" }
+nix = { version="0.27.1", features=["fs", "ioctl", "poll"] }
+chrono = "0.4.35"
+dateparser = "0.2.1"
+once_cell = "1.18.0"
+
+[[bin]]
+name = "hwclock"
+path = "src/main.rs"
