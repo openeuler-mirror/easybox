@@ -7,13 +7,13 @@
 //
 
 use crate::common::util::*;
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 
 #[test]
 fn test_lock() {
     let ts = TestScenario::new(util_name!());
     let start = SystemTime::now();
-    let mut child = ts
+    let _child = ts
         .ucmd()
         .args(&[
             "--shared",
@@ -25,7 +25,7 @@ fn test_lock() {
         ])
         .run_no_wait();
 
-    let _ = child.try_wait();
+    std::thread::sleep(Duration::from_millis(500));
 
     // test nonblock
     ts.ucmd()
