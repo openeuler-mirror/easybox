@@ -170,12 +170,16 @@ fn parse_usage(content: &str) -> String {
             // Replace the util name (assumed to be the first word) with "{}"
             // to be replaced with the runtime value later.
             if let Some((_util, args)) = l.split_once(' ') {
-                format!("{{}} {}", args)
+                format!("{{}} {}\n    ", args)
             } else {
-                "{}".to_string()
+                "".to_string()
             }
         })
-        .collect()
+        .collect::<String>()
+        .rsplit_once("\n    ")
+        .unwrap()
+        .0
+        .to_string()
 }
 
 #[cfg(test)]
