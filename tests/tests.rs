@@ -19,3 +19,7 @@ mod test_pstree;
 #[cfg(feature = "taskset")]
 #[path = "by-util/test_taskset.rs"]
 mod test_taskset;
+
+#[cfg(feature = "xargs")]
+#[path = "by-util/test_xargs.rs"]
+mod test_xargs;
