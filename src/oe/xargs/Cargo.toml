@@ -1,0 +1,26 @@
+[package]
+name = "oe_xargs"
+version = "0.0.1"
+authors = ["openeuler developers"]
+license = "MulanPSL-2.0"
+description = "build and execute command lines from standard input"
+
+homepage = "https://gitee.com/openeuler/easybox"
+repository = "https://gitee.com/openeuler/easybox/tree/master/src/oe/xargs"
+keywords = ["coreutils", "easybox", "util-linux", "cli", "utility"]
+categories = ["command-line-utilities"]
+edition = "2021"
+
+[lib]
+path = "src/xargs.rs"
+
+[dependencies]
+clap = { version = "3.2.0", features = ["wrap_help", "cargo"]}
+uucore = { version=">=0.0.16", package="uucore", path="../../uucore", features = ["encoding","libc"] }
+nix={version = "0.27.1",features = ["ioctl","fs","process"]}
+libc={version = "0.2.149"}
+shell-quote = "0.5.0"
+
+[[bin]]
+name = "xargs"
+path = "src/main.rs"
