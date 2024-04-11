@@ -29,7 +29,8 @@ linux = [
     "hwclock",
     "pstree",
     "taskset",
-    "xargs"
+    "xargs",
+    "attr",
 ]
 ##
 # * bypass/override ~ translate 'test' feature name to avoid dependency collision with rust core 'test' crate (o/w surfaces as compiler errors during testing)
@@ -43,7 +44,8 @@ members = [
   "src/oe/hwclock",
   "src/oe/pstree",
   "src/oe/taskset",
-  "src/oe/xargs"
+  "src/oe/xargs",
+  "src/oe/attr",
 ]
 
 [dependencies]
@@ -62,6 +64,7 @@ hwclock  = { optional=true, version="0.0.1", package="oe_hwclock", path="src/oe/
 pstree = { optional=true, version="0.0.1", package="oe_pstree", path="src/oe/pstree" }
 taskset  = { optional=true, version="0.0.1", package="oe_taskset", path="src/oe/taskset" }
 xargs = { optional=true, version="0.0.1", package="oe_xargs", path="src/oe/xargs" }
+attr  = { optional=true, version="0.0.1", package="oe_attr", path="src/oe/attr" }
 
 # this breaks clippy linting with: "tests/by-util/test_factor_benches.rs: No such file or directory (os error 2)"
 # factor_benches = { optional = true, version = "0.0.0", package = "uu_factor_benches", path = "tests/benches/factor" }
