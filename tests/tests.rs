@@ -40,3 +40,7 @@ mod test_which;
 #[cfg(feature = "xargs")]
 #[path = "by-util/test_xargs.rs"]
 mod test_xargs;
+
+#[cfg(feature = "free")]
+#[path = "by-util/test_free.rs"]
+mod test_free;
