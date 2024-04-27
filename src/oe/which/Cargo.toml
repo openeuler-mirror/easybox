@@ -1,0 +1,25 @@
+[package]
+name = "oe_which"
+version = "0.0.1"
+authors = ["openeuler developers"]
+license = "MulanPSL-2.0"
+description = "which ~ Show or change the CPU affinity of a process."
+
+homepage = "https://gitee.com/openeuler/easybox"
+repository = "https://gitee.com/openeuler/easybox/tree/master/src/oe/which"
+keywords = ["schedutils", "easybox", "util-linux", "cli", "utility"]
+categories = ["command-line-utilities"]
+edition = "2021"
+
+[lib]
+path = "src/which.rs"
+
+[dependencies]
+clap = { version = "3.2.0", features = ["wrap_help", "cargo"] }
+uucore = { version=">=0.0.16", features = ["process"], package="uucore", path="../../uucore"}
+nix = { version = "0.27.1", features = ["fs", "user"] }
+libc = "0.2.152"
+
+[[bin]]
+name = "which"
+path = "src/main.rs"

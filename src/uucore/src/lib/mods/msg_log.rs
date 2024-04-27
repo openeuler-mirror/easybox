@@ -7,9 +7,27 @@
 
 use std::io::Write;
 
+use crate::util_name;
+
 #[allow(dead_code)]
 pub fn errmsg(doexit: bool, excode: i32, adderr: bool, fmt: &str) {
     println!("{}: ", std::env::args().nth(0).unwrap());
+    if fmt != "" {
+        writeln!(std::io::stderr(), "{}", fmt).unwrap();
+        if adderr {
+            write!(std::io::stderr(), ": ").unwrap();
+            eprintln!("{}", std::io::Error::last_os_error());
+        }
+    } else if adderr {
+        eprintln!("{}", std::io::Error::last_os_error());
+    }
+    if doexit {
+        std::process::exit(excode);
+    }
+}
+
+pub fn errmsg_custom(doexit: bool, excode: i32, adderr: bool, fmt: &str) {
+    eprint!("{}: ", util_name());
     if fmt != "" {
         writeln!(std::io::stderr(), "{}", fmt).unwrap();
         if adderr {
