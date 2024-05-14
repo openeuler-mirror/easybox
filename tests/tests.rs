@@ -25,6 +25,10 @@ mod test_pstree;
 #[path = "by-util/test_taskset.rs"]
 mod test_taskset;
 
+#[cfg(feature = "which")]
+#[path = "by-util/test_which.rs"]
+mod test_which;
+
 #[cfg(feature = "xargs")]
 #[path = "by-util/test_xargs.rs"]
 mod test_xargs;

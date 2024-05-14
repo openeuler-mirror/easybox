@@ -1,0 +1,6 @@
+# Based on the EXAMPLES in the C which source
+alias which="alias | which --tty-only --read-alias --show-tilde --show-dot"
+alias test1='test1'
+alias test2='echo "test2" | cat | sort'
+alias test3='  echo "test2"|cat&sort'
+alias test4='    ls &&sort ||/usr/bin/which || exit'

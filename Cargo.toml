@@ -31,6 +31,7 @@ linux = [
     "taskset",
     "xargs",
     "attr",
+    "which",
 ]
 ##
 # * bypass/override ~ translate 'test' feature name to avoid dependency collision with rust core 'test' crate (o/w surfaces as compiler errors during testing)
@@ -46,6 +47,7 @@ members = [
   "src/oe/taskset",
   "src/oe/xargs",
   "src/oe/attr",
+  "src/oe/which",
 ]
 
 [dependencies]
@@ -65,6 +67,7 @@ pstree = { optional=true, version="0.0.1", package="oe_pstree", path="src/oe/pst
 taskset  = { optional=true, version="0.0.1", package="oe_taskset", path="src/oe/taskset" }
 xargs = { optional=true, version="0.0.1", package="oe_xargs", path="src/oe/xargs" }
 attr  = { optional=true, version="0.0.1", package="oe_attr", path="src/oe/attr" }
+which  = { optional=true, version="0.0.1", package="oe_which", path="src/oe/which" }
 
 # this breaks clippy linting with: "tests/by-util/test_factor_benches.rs: No such file or directory (os error 2)"
 # factor_benches = { optional = true, version = "0.0.0", package = "uu_factor_benches", path = "tests/benches/factor" }

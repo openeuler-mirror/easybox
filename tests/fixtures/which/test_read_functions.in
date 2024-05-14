@@ -1,0 +1,23 @@
+// bash version 2.0.5a and older output a pattern for `str' like
+declare -fx test1 ()
+{
+    echo Hello world!
+    echo Hello world!
+    echo I am test1
+}
+
+// bash version 2.0.5b and later output a pattern for `str' like
+test2 ()
+{
+    echo Hello world!
+    echo Hello world!
+    echo I am test2
+}
+
+// Add some zsh support here.
+// zsh does output a pattern for `str' like
+test3 () {
+    echo Hello world!
+    echo Hello world!
+    echo I am test3
+}
