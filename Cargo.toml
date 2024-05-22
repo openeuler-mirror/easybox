@@ -29,6 +29,7 @@ linux = [
     "hwclock",
     "pstree",
     "taskset",
+    "lspci",
     "xargs",
     "attr",
 ]
@@ -40,6 +41,10 @@ oedoc = [ "zip" ]
 members = [
   # external binaries
   "src/oe/base32",
+  "src/oe/flock",
+  "src/oe/pstree",
+  "src/oe/taskset",
+  "src/oe/lspci",
   "src/oe/flock",
   "src/oe/hwclock",
   "src/oe/pstree",
@@ -63,6 +68,7 @@ flock={optional = true,version = "0.0.1",package = "oe_flock",path = "src/oe/flo
 hwclock  = { optional=true, version="0.0.1", package="oe_hwclock", path="src/oe/hwclock" }
 pstree = { optional=true, version="0.0.1", package="oe_pstree", path="src/oe/pstree" }
 taskset  = { optional=true, version="0.0.1", package="oe_taskset", path="src/oe/taskset" }
+lspci  = { optional=true, version="0.0.1", package="oe_lspci", path="src/oe/lspci" }
 xargs = { optional=true, version="0.0.1", package="oe_xargs", path="src/oe/xargs" }
 attr  = { optional=true, version="0.0.1", package="oe_attr", path="src/oe/attr" }
 
