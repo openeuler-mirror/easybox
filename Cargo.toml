@@ -27,6 +27,7 @@ linux = [
     "base32",
     "flock",
     "hwclock",
+    "pidof",
     "pstree",
     "taskset",
     "lspci",
@@ -45,6 +46,7 @@ members = [
   "src/oe/base32",
   "src/oe/flock",
   "src/oe/hwclock",
+  "src/oe/pidof",
   "src/oe/pstree",
   "src/oe/taskset",
   "src/oe/lspci",
@@ -67,6 +69,7 @@ zip = { version = "0.6.0", optional=true, default_features=false, features=["def
 base32  = { optional=true, version="0.0.16", package="oe_base32", path="src/oe/base32" }
 flock={optional = true,version = "0.0.1",package = "oe_flock",path = "src/oe/flock"}
 hwclock  = { optional=true, version="0.0.1", package="oe_hwclock", path="src/oe/hwclock" }
+pidof  = { optional=true, version="0.0.1", package="oe_pidof", path="src/oe/pidof" }
 pstree = { optional=true, version="0.0.1", package="oe_pstree", path="src/oe/pstree" }
 taskset  = { optional=true, version="0.0.1", package="oe_taskset", path="src/oe/taskset" }
 lspci  = { optional=true, version="0.0.1", package="oe_lspci", path="src/oe/lspci" }

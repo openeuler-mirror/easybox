@@ -21,6 +21,10 @@ mod test_hwclock;
 #[path = "by-util/test_lspci.rs"]
 mod test_lspci;
 
+#[cfg(feature = "pidof")]
+#[path = "by-util/test_pidof.rs"]
+mod test_pidof;
+
 #[cfg(feature = "pstree")]
 #[path = "by-util/test_pstree.rs"]
 mod test_pstree;
