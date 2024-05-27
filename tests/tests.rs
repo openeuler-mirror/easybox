@@ -32,3 +32,7 @@ mod test_which;
 #[cfg(feature = "xargs")]
 #[path = "by-util/test_xargs.rs"]
 mod test_xargs;
+
+#[cfg(feature = "lspci")]
+#[path = "by-util/test_lspci.rs"]
+mod test_lspci;

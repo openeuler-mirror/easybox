@@ -1,0 +1,18 @@
+[package]
+name = "oe_lspci"
+version = "0.0.1"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "3.2", features = ["wrap_help", "cargo"] }
+uucore = { version=">=0.0.16", package="uucore", path="../../uucore", features = ["encoding"] }
+nix= {version = "0.27.1",features = ["fs","process","signal","time"]}
+
+[lib]
+path = "src/lspci.rs"
+
+[[bin]]
+name = "lspci"
+path = "src/main.rs"
