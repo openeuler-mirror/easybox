@@ -17,6 +17,10 @@ mod test_flock;
 #[path = "by-util/test_hwclock.rs"]
 mod test_hwclock;
 
+#[cfg(feature = "lspci")]
+#[path = "by-util/test_lspci.rs"]
+mod test_lspci;
+
 #[cfg(feature = "pstree")]
 #[path = "by-util/test_pstree.rs"]
 mod test_pstree;
@@ -25,6 +29,10 @@ mod test_pstree;
 #[path = "by-util/test_taskset.rs"]
 mod test_taskset;
 
+#[cfg(feature = "usleep")]
+#[path = "by-util/test_usleep.rs"]
+mod test_usleep;
+
 #[cfg(feature = "which")]
 #[path = "by-util/test_which.rs"]
 mod test_which;
@@ -32,7 +40,3 @@ mod test_which;
 #[cfg(feature = "xargs")]
 #[path = "by-util/test_xargs.rs"]
 mod test_xargs;
-
-#[cfg(feature = "lspci")]
-#[path = "by-util/test_lspci.rs"]
-mod test_lspci;

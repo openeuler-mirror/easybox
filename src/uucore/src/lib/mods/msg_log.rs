@@ -61,3 +61,9 @@ pub fn warn(fmt: &str) {
 pub fn warnx(fmt: &str) {
     errmsg(false, 0, false, fmt);
 }
+
+#[allow(dead_code)]
+/// Print brief warn message without util name and errno.
+pub fn warnb(fmt: &str) {
+    eprintln!("{}", fmt);
+}
