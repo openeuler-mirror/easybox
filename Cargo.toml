@@ -33,6 +33,7 @@ linux = [
     "xargs",
     "attr",
     "which",
+    "usleep",
 ]
 ##
 # * bypass/override ~ translate 'test' feature name to avoid dependency collision with rust core 'test' crate (o/w surfaces as compiler errors during testing)
@@ -43,16 +44,14 @@ members = [
   # external binaries
   "src/oe/base32",
   "src/oe/flock",
-  "src/oe/pstree",
-  "src/oe/taskset",
-  "src/oe/lspci",
-  "src/oe/flock",
   "src/oe/hwclock",
   "src/oe/pstree",
   "src/oe/taskset",
+  "src/oe/lspci",
   "src/oe/xargs",
   "src/oe/attr",
   "src/oe/which",
+  "src/oe/usleep",
 ]
 
 [dependencies]
@@ -74,6 +73,7 @@ lspci  = { optional=true, version="0.0.1", package="oe_lspci", path="src/oe/lspc
 xargs = { optional=true, version="0.0.1", package="oe_xargs", path="src/oe/xargs" }
 attr  = { optional=true, version="0.0.1", package="oe_attr", path="src/oe/attr" }
 which  = { optional=true, version="0.0.1", package="oe_which", path="src/oe/which" }
+usleep = { optional=true, version="0.0.1", package="oe_usleep", path="src/oe/usleep" }
 
 # this breaks clippy linting with: "tests/by-util/test_factor_benches.rs: No such file or directory (os error 2)"
 # factor_benches = { optional = true, version = "0.0.0", package = "uu_factor_benches", path = "tests/benches/factor" }

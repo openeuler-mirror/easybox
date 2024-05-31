@@ -1,0 +1,23 @@
+[package]
+name = "oe_usleep"
+version = "0.0.1"
+authors = ["openeuler developers"]
+license = "MulanPSL-2.0"
+description = "usleep ~ sleep some number of microseconds  The default is 1."
+
+homepage = "https://gitee.com/openeuler/easybox"
+repository = "https://gitee.com/openeuler/easybox/tree/master/src/oe/usleep"
+keywords = ["coreutils", "easybox", "util-linux", "cli", "utility"]
+categories = ["command-line-utilities"]
+edition = "2021"
+
+[lib]
+path = "src/usleep.rs"
+
+[dependencies]
+clap = { version = "3.2.0", features = ["wrap_help", "cargo"] }
+uucore = { version=">=0.0.16", package="uucore", path="../../uucore", features = ["pretty_float"] }
+
+[[bin]]
+name = "usleep"
+path = "src/main.rs"
