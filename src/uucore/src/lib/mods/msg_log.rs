@@ -5,9 +5,9 @@
 // For the full copyright and license information, please view the LICENSE file
 // that was distributed with this source code.
 
-use std::io::Write;
-
 use crate::util_name;
+use errno::errno;
+use std::{io::Write, process};
 
 #[allow(dead_code)]
 pub fn errmsg(doexit: bool, excode: i32, adderr: bool, fmt: &str) {
@@ -42,6 +42,25 @@ pub fn errmsg_custom(doexit: bool, excode: i32, adderr: bool, fmt: &str) {
     }
 }
 
+/// Equals to `errmsg()` in `c.h`.
+#[allow(dead_code)]
+pub fn errmsg_c(doexit: bool, excode: i32, adderr: bool, fmt: &str) {
+    eprint!("{}: ", util_name());
+    if fmt != "" {
+        eprint!("{}", fmt);
+        if adderr {
+            eprint!(": ");
+        }
+    }
+    if adderr {
+        eprint!("{}", errno());
+    }
+    eprintln!("");
+    if doexit {
+        process::exit(excode);
+    }
+}
+
 #[allow(dead_code)]
 pub fn err(e: i32, fmt: &str) {
     errmsg(true, e, true, fmt);
@@ -66,4 +85,35 @@ pub fn warnx(fmt: &str) {
 /// Print brief warn message without util name and errno.
 pub fn warnb(fmt: &str) {
     eprintln!("{}", fmt);
+}
+
+/// Equals to `err()` in `c.h`.
+#[allow(dead_code)]
+pub fn err_c(e: i32, fmt: &str) {
+    errmsg_c(true, e, true, fmt);
+}
+
+/// Equals to `errx()` in `c.h`.
+#[allow(dead_code)]
+pub fn errx_c(e: i32, fmt: &str) {
+    errmsg_c(true, e, false, fmt);
+}
+
+/// Equals to `warn()` in `c.h`.
+#[allow(dead_code)]
+pub fn warn_c(fmt: &str) {
+    errmsg_c(false, 0, true, fmt);
+}
+
+/// Equals to `warnx()` in `c.h`.
+#[allow(dead_code)]
+pub fn warnx_c(fmt: &str) {
+    errmsg_c(false, 0, false, fmt);
+}
+
+/// Equals to `errtryhelp()` in `c.h`.
+#[allow(dead_code)]
+pub fn errtryhelp_c(eval: i32) {
+    eprintln!("Try '{} --help' for more information.", util_name());
+    process::exit(eval);
 }

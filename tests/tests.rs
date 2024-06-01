@@ -29,6 +29,10 @@ mod test_pstree;
 #[path = "by-util/test_taskset.rs"]
 mod test_taskset;
 
+#[cfg(feature = "setsid")]
+#[path = "by-util/test_setsid.rs"]
+mod test_setsid;
+
 #[cfg(feature = "usleep")]
 #[path = "by-util/test_usleep.rs"]
 mod test_usleep;

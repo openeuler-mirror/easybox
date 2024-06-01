@@ -1,0 +1,26 @@
+[package]
+name = "oe_setsid"
+version = "0.0.1"
+authors = ["openeuler developers"]
+license = "MulanPSL-2.0"
+description = "setsid ~ Run a program in a new session."
+
+homepage = "https://gitee.com/openeuler/easybox"
+repository = "https://gitee.com/openeuler/easybox/tree/master/src/oe/setsid"
+keywords = ["coreutils", "easybox", "util-linux", "cli", "utility"]
+categories = ["command-line-utilities"]
+edition = "2021"
+
+[lib]
+path = "src/setsid.rs"
+
+[dependencies]
+clap = { version = "3.2.0", features = ["wrap_help", "cargo"] }
+errno = "0.3.9"
+fork = "0.1.23"
+nix = { version = "0.27.1", features = ["process"]}
+uucore = { version = ">=0.0.16", package = "uucore", path = "../../uucore" }
+
+[[bin]]
+name = "setsid"
+path = "src/main.rs"
