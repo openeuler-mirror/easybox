@@ -1,0 +1,23 @@
+[package]
+name = "oe_free"
+version = "0.0.1"
+authors = ["openeuler developers"]
+license = "MulanPSL-2.0"
+description = "free ~ Display amount of free and used memory in the system"
+
+homepage = "https://gitee.com/openeuler/easybox"
+repository = "https://github.com/uutils/coreutils/tree/main/src/oe/free"
+keywords = ["coreutils", "easybox", "util-linux", "cli", "utility"]
+categories = ["command-line-utilities"]
+edition = "2021"
+
+[lib]
+path = "src/free.rs"
+
+[dependencies]
+clap = { version = "3.2.0", features = ["wrap_help", "cargo"] }
+uucore = { version=">=0.0.16", package="uucore", path="../../uucore", features = ["encoding"] }
+
+[[bin]]
+name = "free"
+path = "src/main.rs"

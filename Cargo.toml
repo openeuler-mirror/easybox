@@ -32,6 +32,8 @@ linux = [
     "lspci",
     "xargs",
     "attr",
+    "free",
+    "usleep",
     "which",
     "usleep",
 ]
@@ -51,6 +53,8 @@ members = [
   "src/oe/xargs",
   "src/oe/attr",
   "src/oe/which",
+  "src/oe/usleep",
+  "src/oe/free",
   "src/oe/usleep",
 ]
 
@@ -72,6 +76,7 @@ taskset  = { optional=true, version="0.0.1", package="oe_taskset", path="src/oe/
 lspci  = { optional=true, version="0.0.1", package="oe_lspci", path="src/oe/lspci" }
 xargs = { optional=true, version="0.0.1", package="oe_xargs", path="src/oe/xargs" }
 attr  = { optional=true, version="0.0.1", package="oe_attr", path="src/oe/attr" }
+free = { optional=true, version="0.0.1", package="oe_free", path="src/oe/free" }
 which  = { optional=true, version="0.0.1", package="oe_which", path="src/oe/which" }
 usleep = { optional=true, version="0.0.1", package="oe_usleep", path="src/oe/usleep" }
 
@@ -100,6 +105,7 @@ uucore = { version=">=0.0.16", package="uucore", path="src/uucore", features=["e
 walkdir = "2.2.0"
 atty = "0.2.0"
 hex-literal = "0.3.1"
+lazy_static = "1.4.0"
 
 [target.'cfg(any(target_os = "linux", target_os = "android"))'.dev-dependencies]
 procfs = { version = "0.14.0", default-features = false }
