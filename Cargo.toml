@@ -38,7 +38,8 @@ linux = [
     "which",
     "usleep",
     "column",
-    "setsid"
+    "setsid",
+    "sha256sum",
 ]
 ##
 # * bypass/override ~ translate 'test' feature name to avoid dependency collision with rust core 'test' crate (o/w surfaces as compiler errors during testing)
@@ -62,6 +63,7 @@ members = [
   "src/oe/usleep",
   "src/oe/column",
   "src/oe/setsid",
+  "src/oe/sha256sum",
 ]
 
 [dependencies]
@@ -89,6 +91,7 @@ which  = { optional=true, version="0.0.1", package="oe_which", path="src/oe/whic
 usleep = { optional=true, version="0.0.1", package="oe_usleep", path="src/oe/usleep" }
 column = { optional=true, version="0.0.1", package="oe_column", path="src/oe/column" }
 setsid = { optional=true, version="0.0.1", package="oe_setsid", path="src/oe/setsid" }
+sha256sum  = { optional=true, version="0.0.1", package="oe_sha256sum", path="src/oe/sha256sum" }
 
 # this breaks clippy linting with: "tests/by-util/test_factor_benches.rs: No such file or directory (os error 2)"
 # factor_benches = { optional = true, version = "0.0.0", package = "uu_factor_benches", path = "tests/benches/factor" }

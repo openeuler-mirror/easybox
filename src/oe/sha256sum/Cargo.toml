@@ -1,0 +1,17 @@
+[package]
+name = "oe_sha256sum"
+version = "0.0.1"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+path = "src/sha256sum.rs"
+
+[dependencies]
+clap = { version = "3.2.0", features = ["wrap_help", "cargo"] }
+uucore = { version=">=0.0.16", package="uucore", path="../../uucore", features = ["encoding"] }
+
+[[bin]]
+name = "sha256sum"
+path = "src/main.rs"
