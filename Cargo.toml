@@ -37,6 +37,7 @@ linux = [
     "usleep",
     "which",
     "usleep",
+    "column",
     "setsid"
 ]
 ##
@@ -59,6 +60,7 @@ members = [
   "src/oe/usleep",
   "src/oe/free",
   "src/oe/usleep",
+  "src/oe/column",
   "src/oe/setsid",
 ]
 
@@ -85,6 +87,7 @@ attr  = { optional=true, version="0.0.1", package="oe_attr", path="src/oe/attr" 
 free = { optional=true, version="0.0.1", package="oe_free", path="src/oe/free" }
 which  = { optional=true, version="0.0.1", package="oe_which", path="src/oe/which" }
 usleep = { optional=true, version="0.0.1", package="oe_usleep", path="src/oe/usleep" }
+column = { optional=true, version="0.0.1", package="oe_column", path="src/oe/column" }
 setsid = { optional=true, version="0.0.1", package="oe_setsid", path="src/oe/setsid" }
 
 # this breaks clippy linting with: "tests/by-util/test_factor_benches.rs: No such file or directory (os error 2)"

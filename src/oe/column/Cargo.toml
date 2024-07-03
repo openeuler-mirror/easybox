@@ -1,0 +1,33 @@
+[package]
+name = "oe_column"
+version = "0.0.1"
+authors = ["openeuler developers"]
+license = "MulanPSL-2.0"
+description = "Columnate lists."
+
+homepage = "https://gitee.com/openeuler/easybox"
+repository = "https://gitee.com/openeuler/easybox/tree/master/src/oe/column"
+keywords = ["coreutils", "easybox", "util-linux", "cli", "utility"]
+categories = ["command-line-utilities"]
+edition = "2021"
+
+[lib]
+path = "src/column.rs"
+
+[dependencies]
+clap = { version = "3.2.0", features = ["wrap_help", "cargo"]}
+uucore = { version=">=0.0.16", package="uucore", path="../../uucore", features = ["encoding","libc"] }
+nix={version = "0.27.1",features = ["ioctl","fs","process"]}
+libc={version = "0.2.149"}
+termion = "1.5"
+comfy-table = "7.1.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+libm = "0.2.8"
+
+[build-dependencies]
+cc = "1.0"
+
+[[bin]]
+name = "column"
+path = "src/main.rs"

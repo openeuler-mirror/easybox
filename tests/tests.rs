@@ -52,3 +52,7 @@ mod test_xargs;
 #[cfg(feature = "free")]
 #[path = "by-util/test_free.rs"]
 mod test_free;
+
+#[cfg(feature = "column")]
+#[path = "by-util/test_column.rs"]
+mod test_column;
