@@ -88,3 +88,7 @@ mod test_usermod;
 #[cfg(feature = "useradd")]
 #[path = "by-util/test_useradd.rs"]
 mod test_useradd;
+
+#[cfg(feature = "find")]
+#[path = "by-util/test_find.rs"]
+mod test_find;
