@@ -1,0 +1,10 @@
+{
+  "Struct1": {
+    "Number1":  100,
+    "Number2": 500,
+    "String1":  "Love from China",
+    "Url": "https://gitee.com/openeuler/easybox",
+    "Bool1" : false,
+    "IDs": [1, 2, 3, 4, 10]
+  }
+}

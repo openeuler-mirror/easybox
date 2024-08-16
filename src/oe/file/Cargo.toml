@@ -1,0 +1,31 @@
+[package]
+name = "oe_file"
+version = "0.0.1"
+authors = ["Zhihua Zhao <YuukaC@outlook.com>"]
+license = "MulanPSL-2.0"
+description = "file ~ Determine type of FILEs."
+
+homepage = "https://gitee.com/openeuler/easybox"
+keywords = ["coreutils", "easybox", "util-linux", "cli", "utility"]
+categories = ["command-line-utilities"]
+edition = "2021"
+
+[lib]
+path = "src/file.rs"
+
+[dependencies]
+clap = { version = "3.2.0", features = ["wrap_help", "cargo"] }
+uucore = { version = ">=0.0.16", package = "uucore", path = "../../uucore", features = [
+    "encoding",
+] }
+libc = "0.2.152"
+libseccomp = { version = "0.3.0", optional = true }
+
+[features]
+default = ["wide"]
+sandbox = ["libseccomp"]
+wide = []
+
+[[bin]]
+name = "file"
+path = "src/main.rs"

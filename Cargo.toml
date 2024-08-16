@@ -50,6 +50,7 @@ linux = [
     "useradd",
     "find",
     "login",
+    "file",
 ]
 ##
 # * bypass/override ~ translate 'test' feature name to avoid dependency collision with rust core 'test' crate (o/w surfaces as compiler errors during testing)
@@ -84,6 +85,7 @@ members = [
   "src/oe/useradd",
   "src/oe/find",
   "src/oe/login",
+  "src/oe/file",
 ]
 
 [dependencies]
@@ -124,6 +126,7 @@ usermod = { optional=true, version="0.0.1", package="oe_usermod", path="src/oe/u
 useradd = { optional=true, version="0.0.1", package="oe_useradd", path="src/oe/useradd" }
 find = { optional=true, version="0.0.1", package="oe_find", path="src/oe/find" }
 login  = { optional=true, version="0.0.1", package="oe_login", path="src/oe/login" }
+file = { optional=true, version="0.0.1", package="oe_file", path="src/oe/file" }
 
 # this breaks clippy linting with: "tests/by-util/test_factor_benches.rs: No such file or directory (os error 2)"
 # factor_benches = { optional = true, version = "0.0.0", package = "uu_factor_benches", path = "tests/benches/factor" }
