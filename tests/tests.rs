@@ -61,6 +61,10 @@ mod test_column;
 #[path = "by-util/test_sha256sum.rs"]
 mod test_sha256sum;
 
+#[cfg(feature = "killall")]
+#[path = "by-util/test_killall.rs"]
+mod test_killall;
+
 #[cfg(feature = "md5sum")]
 #[path = "by-util/test_md5sum.rs"]
 mod test_md5sum;
