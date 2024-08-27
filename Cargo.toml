@@ -40,6 +40,7 @@ linux = [
     "column",
     "setsid",
     "sha256sum",
+    "killall",
     "md5sum",
 ]
 ##
@@ -65,6 +66,7 @@ members = [
   "src/oe/column",
   "src/oe/setsid",
   "src/oe/sha256sum",
+  "src/oe/killall",
   "src/oe/md5sum",
 ]
 
@@ -94,6 +96,7 @@ usleep = { optional=true, version="0.0.1", package="oe_usleep", path="src/oe/usl
 column = { optional=true, version="0.0.1", package="oe_column", path="src/oe/column" }
 setsid = { optional=true, version="0.0.1", package="oe_setsid", path="src/oe/setsid" }
 sha256sum  = { optional=true, version="0.0.1", package="oe_sha256sum", path="src/oe/sha256sum" }
+killall = { optional=true, version="0.0.1", package="oe_killall", path="src/oe/killall" }
 md5sum  = { optional=true, version="0.0.1", package="oe_md5sum", path="src/oe/md5sum" }
 
 # this breaks clippy linting with: "tests/by-util/test_factor_benches.rs: No such file or directory (os error 2)"
@@ -123,6 +126,7 @@ atty = "0.2.0"
 hex-literal = "0.3.1"
 lazy_static = "1.4.0"
 nix = { version="0.27.1", features=["user"]}
+serial_test = "1.0.0"
 
 [target.'cfg(any(target_os = "linux", target_os = "android"))'.dev-dependencies]
 procfs = { version = "0.14.0", default-features = false }
