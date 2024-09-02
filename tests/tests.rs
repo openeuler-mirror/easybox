@@ -29,6 +29,10 @@ mod test_pidof;
 #[path = "by-util/test_pstree.rs"]
 mod test_pstree;
 
+#[cfg(feature = "sysctl")]
+#[path = "by-util/test_sysctl.rs"]
+mod test_sysctl;
+
 #[cfg(feature = "taskset")]
 #[path = "by-util/test_taskset.rs"]
 mod test_taskset;

@@ -1,0 +1,27 @@
+[package]
+name = "oe_sysctl"
+version = "0.0.1"
+authors = ["openeuler developers"]
+license = "MulanPSL-2.0"
+description = "sysctl ~ configure kernel parameters at runtime"
+
+homepage = "https://gitee.com/openeuler/easybox"
+repository = "https://gitee.com/openeuler/easybox/tree/master/src/oe/sysctl"
+keywords = ["coreutils", "easybox", "util-linux", "cli", "utility"]
+categories = ["command-line-utilities"]
+edition = "2021"
+
+[lib]
+path = "src/sysctl.rs"
+
+[dependencies]
+clap = { version = "3.2.0", features = ["wrap_help", "cargo"] }
+errno = "0.3.9"
+glob = "0.3.1"
+libc = "0.2.155"
+regex = "1.10.4"
+uucore = { version=">=0.0.16", package="uucore", path="../../uucore" }
+
+[[bin]]
+name = "sysctl"
+path = "src/main.rs"
