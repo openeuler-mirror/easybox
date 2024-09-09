@@ -1,0 +1,21 @@
+[package]
+name = "oe_umount"
+version = "0.0.1"
+edition = "2021"
+authors = ["Zhenghang"]
+license = "MulanPSL-2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+path = "src/umount.rs"
+[dependencies]
+uucore = { version=">=0.0.16", features = ["umount"],package="uucore", path="../../uucore"}
+clap = { version = "3.2.0", features = ["wrap_help", "cargo"] }
+scopeguard = "1.2.0"
+nix = { version = "0.25.1", optional = false, default-features = false, features = ["mount", "process", "sched"] }
+log = "0.4.22"
+once_cell = "1.19.0"
+
+[[bin]]
+name = "umount"
+path = "src/main.rs"

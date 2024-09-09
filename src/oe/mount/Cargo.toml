@@ -1,0 +1,20 @@
+[package]
+name = "oe_mount"
+version = "0.0.1"
+edition = "2021"
+authors = ["Zhenghang"]
+license = "MulanPSL-2.0"
+
+
+[lib]
+path = "src/mount.rs"
+
+[dependencies]
+clap = { version = "3.2.0", features = ["wrap_help", "cargo"] }
+uucore = { version=">=0.0.16", features = ["mount"],package="uucore", path="../../uucore"}
+nix = { version = "0.25.1", optional = false, default-features = false, features = ["mount", "process", "sched"] }
+regex = "1.10.5"
+scopeguard = "1.1.0"
+[[bin]]
+name = "mount"
+path = "src/main.rs"
