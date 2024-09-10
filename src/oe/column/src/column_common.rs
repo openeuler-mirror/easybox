@@ -5,8 +5,8 @@
 // For the full copyright and license information, please view the LICENSE file
 // that was distributed with this source code.
 
-use clap::{crate_version, Arg, ArgMatches, Command};
-use libc::EXIT_FAILURE;
+use clap::{crate_version, Arg, ArgGroup, ArgMatches, Command};
+use libc::{setlocale, EXIT_FAILURE, LC_ALL};
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fs::File;
@@ -84,11 +84,11 @@ pub struct Config {
     ///
     pub json: bool,
     ///
-    pub table_truncate: Option<Vec<String>>,
+    pub table_truncate: Option<Vec<usize>>,
     ///
-    pub table_wrap: Option<Vec<String>>,
+    pub table_wrap: Option<Vec<usize>>,
     ///
-    pub table_noextreme: Option<Vec<String>>,
+    pub table_noextreme: Option<Vec<usize>>,
     ///
     pub table_header_repeat: bool,
 }
@@ -109,8 +109,6 @@ pub mod options {
     pub static TABLE_NOEXTREME: &str = "table-noextreme";
     /// --table-noheadings
     pub static TABLE_NOHEADINGS: &str = "table-noheadings";
-    /// --table-maxout
-    pub static TABLE_MAXOUT: &str = "table-maxout";
     /// --table-header-repeat
     pub static TABLE_HEADER_REPEAT: &str = "table-header-repeat";
     /// --table-hide <columns>
@@ -150,15 +148,10 @@ impl Config {
             || args_matches.contains_id(options::JSON)
         {
             ColumnMode::Table
-        } else if args_matches.contains_id(options::OUTPUT_WIDTH)
-            && !args_matches.contains_id(options::TABLE)
-            && !args_matches.contains_id(options::FILLROWS)
-        {
-            ColumnMode::FillCols
         } else if args_matches.contains_id(options::FILLROWS) {
             ColumnMode::FillRows
         } else {
-            ColumnMode::Simple
+            ColumnMode::FillCols
         };
 
         let table_columns = args_matches
@@ -185,27 +178,60 @@ impl Config {
             .get_one::<String>(options::TABLE_ORDER)
             .map(|s| s.split(',').map(|s| s.to_string()).collect::<Vec<String>>());
 
-        let table_columns_limit = args_matches
-            .value_of(options::TABLE_COLUMNS_LIMIT)
-            .map(|s| s.parse::<usize>().unwrap());
+        let table_columns_limit = match args_matches.get_one::<String>(options::TABLE_COLUMNS_LIMIT)
+        {
+            Some(s) => match s.parse::<usize>() {
+                Ok(t) => {
+                    if t == 0 {
+                        return Err(USimpleError::new(
+                            EXIT_FAILURE,
+                            format!("columns limit must be greater than zero"),
+                        ));
+                    }
+                    Some(t)
+                }
+                Err(_) => {
+                    return Err(USimpleError::new(
+                        EXIT_FAILURE,
+                        format!("invalid columns limit argument: '{}'", s),
+                    ))
+                }
+            },
+            None => None,
+        };
 
         let table_noheadings = args_matches.contains_id(options::TABLE_NOHEADINGS);
 
-        let table_hide = parse_columns(
+        let table_hide = match parse_columns(
             args_matches.get_one::<String>(options::TABLE_HIDE),
             &table_columns,
-        );
+        ) {
+            Ok(columns) => columns,
+            Err(e) => return Err(e),
+        };
 
-        let table_right = parse_columns(
+        let table_right = match parse_columns(
             args_matches.get_one::<String>(options::TABLE_RIGHT),
             &table_columns,
-        );
+        ) {
+            Ok(columns) => columns,
+            Err(e) => return Err(e),
+        };
 
         let keep_empty_lines = args_matches.contains_id(options::KEEP_EMPTY_LINES);
 
-        let termwidth = args_matches
-            .value_of(options::OUTPUT_WIDTH)
-            .map(|s| s.parse::<usize>().unwrap());
+        let termwidth = match args_matches.get_one::<String>(options::OUTPUT_WIDTH) {
+            Some(s) => match s.parse::<usize>() {
+                Ok(t) => Some(t),
+                Err(_) => {
+                    return Err(USimpleError::new(
+                        EXIT_FAILURE,
+                        format!("invalid columns argument: '{}'", s),
+                    ))
+                }
+            },
+            None => None,
+        };
 
         let tree = args_matches
             .get_one::<String>(options::TREE)
@@ -225,32 +251,29 @@ impl Config {
 
         let json = args_matches.contains_id(options::JSON);
 
-        let table_truncate = args_matches
-            .get_one::<String>(options::TABLE_TRUNCATE)
-            .map(|value| {
-                value
-                    .split(',')
-                    .map(|s| s.to_string())
-                    .collect::<Vec<String>>()
-            });
+        let table_truncate = match parse_columns(
+            args_matches.get_one::<String>(options::TABLE_TRUNCATE),
+            &table_columns,
+        ) {
+            Ok(columns) => columns,
+            Err(e) => return Err(e),
+        };
 
-        let table_wrap = args_matches
-            .get_one::<String>(options::TABLE_WRAP)
-            .map(|value| {
-                value
-                    .split(',')
-                    .map(|s| s.to_string())
-                    .collect::<Vec<String>>()
-            });
+        let table_wrap = match parse_columns(
+            args_matches.get_one::<String>(options::TABLE_WRAP),
+            &table_columns,
+        ) {
+            Ok(columns) => columns,
+            Err(e) => return Err(e),
+        };
 
-        let table_noextreme = args_matches
-            .get_one::<String>(options::TABLE_NOEXTREME)
-            .map(|value| {
-                value
-                    .split(',')
-                    .map(|s| s.to_string())
-                    .collect::<Vec<String>>()
-            });
+        let table_noextreme = match parse_columns(
+            args_matches.get_one::<String>(options::TABLE_NOEXTREME),
+            &table_columns,
+        ) {
+            Ok(columns) => columns,
+            Err(e) => return Err(e),
+        };
 
         let table_header_repeat = args_matches.contains_id(options::TABLE_HEADER_REPEAT);
 
@@ -317,38 +340,17 @@ pub fn column_app<'a>(about: &'a str, usage: &'a str) -> Command<'a> {
                 .long(options::TABLE)
                 .help("create a table")
                 .takes_value(false)
-                .required(false),
+                .required(false)
+                .display_order(10),
         )
         .arg(
-            Arg::new(options::SEPARATOR)
-                .short('s')
-                .long(options::SEPARATOR)
-                .value_name("string")
-                .help("possible table delimiters")
+            Arg::with_name(options::TABLE_NAME)
+                .short('n')
+                .long(options::TABLE_NAME)
+                .help("table name for JSON output")
+                .value_name("name")
                 .takes_value(true)
-                .required(false),
-        )
-        .arg(
-            Arg::new(options::INPUT_FILES)
-                .help("Specifies the input file")
-                .multiple_values(true)
-                .required(false),
-        )
-        .arg(
-            Arg::with_name(options::TABLE_COLUMNS)
-                .short('N')
-                .long(options::TABLE_COLUMNS)
-                .value_name("names")
-                .help("Columns to display in the table")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name(options::OUTPUT_SEPARATOR)
-                .short('o')
-                .long(options::OUTPUT_SEPARATOR)
-                .value_name("string")
-                .help("columns separator for table output (default is two spaces)")
-                .takes_value(true),
+                .display_order(20),
         )
         .arg(
             Arg::with_name(options::TABLE_ORDER)
@@ -356,7 +358,17 @@ pub fn column_app<'a>(about: &'a str, usage: &'a str) -> Command<'a> {
                 .long(options::TABLE_ORDER)
                 .help("specify order of output columns")
                 .value_name("columns")
-                .takes_value(true),
+                .takes_value(true)
+                .display_order(30),
+        )
+        .arg(
+            Arg::with_name(options::TABLE_COLUMNS)
+                .short('N')
+                .long(options::TABLE_COLUMNS)
+                .value_name("names")
+                .help("comma separated columns names")
+                .takes_value(true)
+                .display_order(40),
         )
         .arg(
             Arg::with_name(options::TABLE_COLUMNS_LIMIT)
@@ -364,21 +376,32 @@ pub fn column_app<'a>(about: &'a str, usage: &'a str) -> Command<'a> {
                 .long(options::TABLE_COLUMNS_LIMIT)
                 .help("maximal number of input columns")
                 .value_name("num")
-                .takes_value(true),
+                .takes_value(true)
+                .display_order(50),
+        )
+        .arg(
+            Arg::with_name(options::TABLE_NOEXTREME)
+                .short('E')
+                .long(options::TABLE_NOEXTREME)
+                .help("don't count long text from the columns to column width")
+                .value_name("columns")
+                .takes_value(true)
+                .display_order(60),
         )
         .arg(
             Arg::with_name(options::TABLE_NOHEADINGS)
                 .short('d')
                 .long(options::TABLE_NOHEADINGS)
                 .help("don't print header")
-                .takes_value(false),
+                .takes_value(false)
+                .display_order(70),
         )
         .arg(
-            Arg::with_name(options::TABLE_MAXOUT)
-                .short('m')
-                .long(options::TABLE_MAXOUT)
-                .help("fill all available space")
-                .takes_value(false),
+            Arg::with_name(options::TABLE_HEADER_REPEAT)
+                .short('e')
+                .long(options::TABLE_HEADER_REPEAT)
+                .help("repeat header for each page")
+                .display_order(80),
         )
         .arg(
             Arg::with_name(options::TABLE_HIDE)
@@ -387,7 +410,8 @@ pub fn column_app<'a>(about: &'a str, usage: &'a str) -> Command<'a> {
                 .value_name("columns")
                 .allow_hyphen_values(true)
                 .takes_value(true)
-                .help("don't print the columns"),
+                .help("don't print the columns")
+                .display_order(90),
         )
         .arg(
             Arg::with_name(options::TABLE_RIGHT)
@@ -396,82 +420,8 @@ pub fn column_app<'a>(about: &'a str, usage: &'a str) -> Command<'a> {
                 .value_name("columns")
                 .allow_hyphen_values(true)
                 .takes_value(true)
-                .help("right align text in these columns"),
-        )
-        .arg(
-            Arg::with_name(options::KEEP_EMPTY_LINES)
-                .short('L')
-                .long(options::KEEP_EMPTY_LINES)
-                .help("don't ignore empty lines")
-                .takes_value(false),
-        )
-        .arg(
-            Arg::with_name(options::OUTPUT_WIDTH)
-                .short('c')
-                .long(options::OUTPUT_WIDTH)
-                .help("width of output in number of characters")
-                .value_name("width")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name(options::FILLROWS)
-                .short('x')
-                .long(options::FILLROWS)
-                .help("fill rows before columns")
-                .takes_value(false),
-        )
-        .arg(
-            Arg::with_name(options::TABLE_NOEXTREME)
-                .short('E')
-                .long(options::TABLE_NOEXTREME)
-                .help("don't count long text from the columns to column width")
-                .value_name("columns")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name(options::TREE)
-                .short('r')
-                .long(options::TREE)
-                .help("column to use tree-like output for the table")
-                .value_name("column")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name(options::TREE_ID)
-                .short('i')
-                .long(options::TREE_ID)
-                .help("line ID to specify child-parent relation")
-                .value_name("column")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name(options::TABLE_HEADER_REPEAT)
-                .short('e')
-                .long(options::TABLE_HEADER_REPEAT)
-                .help("repeat header for each page"),
-        )
-        .arg(
-            Arg::with_name(options::TREE_PARENT)
-                .short('p')
-                .long(options::TREE_PARENT)
-                .help("parent to specify child-parent relation")
-                .value_name("column")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name(options::TABLE_NAME)
-                .short('n')
-                .long(options::TABLE_NAME)
-                .help("table name for JSON output")
-                .value_name("name")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name(options::JSON)
-                .short('J')
-                .long(options::JSON)
-                .help("use JSON output format for table")
-                .takes_value(false),
+                .help("right align text in these columns")
+                .display_order(100),
         )
         .arg(
             Arg::with_name(options::TABLE_TRUNCATE)
@@ -479,7 +429,8 @@ pub fn column_app<'a>(about: &'a str, usage: &'a str) -> Command<'a> {
                 .long(options::TABLE_TRUNCATE)
                 .help("truncate text in the columns when necessary")
                 .value_name("columns")
-                .takes_value(true),
+                .takes_value(true)
+                .display_order(110),
         )
         .arg(
             Arg::with_name(options::TABLE_WRAP)
@@ -487,8 +438,100 @@ pub fn column_app<'a>(about: &'a str, usage: &'a str) -> Command<'a> {
                 .long(options::TABLE_WRAP)
                 .help("wrap text in the columns when necessary")
                 .value_name("columns")
-                .takes_value(true),
+                .takes_value(true)
+                .display_order(120),
         )
+        .arg(
+            Arg::with_name(options::KEEP_EMPTY_LINES)
+                .short('L')
+                .long(options::KEEP_EMPTY_LINES)
+                .help("don't ignore empty lines")
+                .takes_value(false)
+                // deprecated alias
+                .alias("table-empty-lines")
+                .display_order(130),
+        )
+        .arg(
+            Arg::with_name(options::JSON)
+                .short('J')
+                .long(options::JSON)
+                .help("use JSON output format for table")
+                .takes_value(false)
+                .display_order(140),
+        )
+        .arg(
+            Arg::with_name(options::TREE)
+                .short('r')
+                .long(options::TREE)
+                .help("column to use tree-like output for the table")
+                .value_name("column")
+                .takes_value(true)
+                .display_order(150),
+        )
+        .arg(
+            Arg::with_name(options::TREE_ID)
+                .short('i')
+                .long(options::TREE_ID)
+                .help("line ID to specify child-parent relation")
+                .value_name("column")
+                .takes_value(true)
+                .display_order(160),
+        )
+        .arg(
+            Arg::with_name(options::TREE_PARENT)
+                .short('p')
+                .long(options::TREE_PARENT)
+                .help("parent to specify child-parent relation")
+                .value_name("column")
+                .takes_value(true)
+                .display_order(170),
+        )
+        .arg(
+            Arg::with_name(options::OUTPUT_WIDTH)
+                .short('c')
+                .long(options::OUTPUT_WIDTH)
+                .help("width of output in number of characters")
+                .value_name("width")
+                .takes_value(true)
+                .display_order(180),
+        )
+        .arg(
+            Arg::with_name(options::OUTPUT_SEPARATOR)
+                .short('o')
+                .long(options::OUTPUT_SEPARATOR)
+                .value_name("string")
+                .help("columns separator for table output (default is two spaces)")
+                .takes_value(true)
+                .display_order(190),
+        )
+        .arg(
+            Arg::new(options::SEPARATOR)
+                .short('s')
+                .long(options::SEPARATOR)
+                .value_name("string")
+                .help("possible table delimiters")
+                .takes_value(true)
+                .required(false)
+                .display_order(200),
+        )
+        .arg(
+            Arg::with_name(options::FILLROWS)
+                .short('x')
+                .long(options::FILLROWS)
+                .help("fill rows before columns")
+                .takes_value(false)
+                .display_order(210),
+        )
+        .arg(
+            Arg::new(options::INPUT_FILES)
+                .help("Specifies the input file")
+                .multiple_values(true)
+                .required(false),
+        )
+        .groups(&[
+            ArgGroup::new("tx").args(&[options::TABLE, options::FILLROWS]),
+            ArgGroup::new("Jx").args(&[options::JSON, options::FILLROWS]),
+        ])
 }
 
 /// This the main of column
@@ -498,31 +541,55 @@ pub fn column_main(mut config: Config) -> UResult<()> {
         config.termwidth = Some(get_terminal_width(80 as usize));
     }
 
+    // Set locale to get correct symbols
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    unsafe {
+        setlocale(LC_ALL, b"\0".as_ptr() as *const i8)
+    };
+    #[cfg(target_arch = "aarch64")]
+    unsafe {
+        setlocale(LC_ALL, b"\0".as_ptr())
+    };
+
     // Validation of attribute values
-    validate_args(&config)?;
+    validate_args(&mut config)?;
 
     let input_files: Option<Vec<String>> = config.input_files.clone();
     if let Some(input_files) = input_files {
         for file_path in input_files {
             // println!("file_path = {}", file_path);
-            let absolute_path = Path::new(&file_path).canonicalize().unwrap();
+            let absolute_path = match Path::new(&file_path).canonicalize() {
+                Ok(p) => p,
+                Err(e) => {
+                    return Err(USimpleError::new(
+                        EXIT_FAILURE,
+                        format!("{}: {}", file_path, e),
+                    ))
+                }
+            };
             match File::open(&absolute_path) {
                 Ok(file) => {
                     if let Err(err) = read_input(file, &mut config) {
-                        eprintln!("Error reading file {}: {}", file_path, err);
-                        return Err(USimpleError::new(EXIT_FAILURE, "Error reading file"));
+                        return Err(USimpleError::new(
+                            EXIT_FAILURE,
+                            format!("Error reading file {}: {}", file_path, err),
+                        ));
                     }
                 }
                 Err(err) => {
-                    eprintln!("Failed to open file {}: {}", file_path, err);
-                    return Err(USimpleError::new(EXIT_FAILURE, "Failed to open file"));
+                    return Err(USimpleError::new(
+                        EXIT_FAILURE,
+                        format!("Failed to open file {}: {}", file_path, err),
+                    ));
                 }
             }
         }
     } else {
         if let Err(err) = read_input(io::stdin(), &mut config) {
-            eprintln!("Error reading from stdin: {}", err);
-            return Err(USimpleError::new(EXIT_FAILURE, "Error reading from stdin"));
+            return Err(USimpleError::new(
+                EXIT_FAILURE,
+                format!("Error reading from stdin: {}", err),
+            ));
         }
     }
 

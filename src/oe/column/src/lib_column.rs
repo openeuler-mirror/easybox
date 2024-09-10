@@ -7,10 +7,11 @@
 
 use crate::column_common::{ColumnMode, Config, TableRow};
 use comfy_table::{CellAlignment, ColumnConstraint, ContentArrangement, Table};
-use libc::EXIT_FAILURE;
+use libc::{nl_langinfo, CODESET, EXIT_FAILURE};
 use serde_json::json;
 use std::{
     collections::HashMap,
+    ffi::CStr,
     io::{self, stdout, BufRead, BufReader, Read, Write},
 };
 use termion::terminal_size;
@@ -116,7 +117,7 @@ pub fn table_main(config: &mut Config) -> UResult<()> {
         wrap_columns(config)?;
     }
 
-    // Josn
+    // JSON
     if config.json {
         print_json(config);
         return Ok(());
@@ -545,19 +546,8 @@ pub fn truncate_columns(config: &mut Config) -> UResult<()> {
     let mut table_truncate_index: Vec<usize> = Vec::new();
 
     if let Some(table_truncate) = &config.table_truncate {
-        if let Some(table_column) = &config.table_columns {
-            for truncate in table_truncate {
-                if let Some(index) = table_column.iter().position(|column| column == truncate) {
-                    table_truncate_index.push(index);
-                } else {
-                    return Err(USimpleError::new(
-                        EXIT_FAILURE,
-                        "Error: truncate contains invalid column name",
-                    ));
-                }
-            }
-            table_truncate_index.sort();
-        }
+        table_truncate_index.extend(table_truncate);
+        table_truncate_index.sort();
 
         for (index, &len) in col_cells_and_titles_max_lengths.iter().enumerate() {
             if !table_truncate_index.contains(&index) && !table_hide_index.contains(&index) {
@@ -620,19 +610,8 @@ pub fn wrap_columns(config: &mut Config) -> UResult<()> {
     let mut table_wrap_index: Vec<usize> = Vec::new();
 
     if let Some(table_wrap) = &config.table_wrap {
-        if let Some(table_column) = &config.table_columns {
-            for wrap in table_wrap {
-                if let Some(index) = table_column.iter().position(|column| column == wrap) {
-                    table_wrap_index.push(index);
-                } else {
-                    return Err(USimpleError::new(
-                        EXIT_FAILURE,
-                        "Error: wrap contains invalid column name",
-                    ));
-                }
-            }
-            table_wrap_index.sort();
-        }
+        table_wrap_index.extend(table_wrap);
+        table_wrap_index.sort();
 
         for (index, &len) in col_cells_and_titles_max_lengths.iter().enumerate() {
             if !table_wrap_index.contains(&index) && !table_hide_index.contains(&index) {
@@ -724,21 +703,34 @@ fn print_node_tree(
     output: &mut Vec<Vec<String>>,
     tree_index: usize,
 ) {
-    if let Some(child_nodes) = nodes.get(&parent_node) {
-        let mut sorted_child_nodes = child_nodes.clone();
-        sorted_child_nodes.sort_by_key(|parts| parts[0].parse::<i32>().unwrap_or(0));
+    let mut titlepadding_symbol = " ";
+    let mut branch_symbol = "|-";
+    let mut vertical_symbol = "| ";
+    let mut right_symbol = "`-";
 
-        for (index, parts) in sorted_child_nodes.iter().enumerate() {
+    if unsafe { CStr::from_ptr(nl_langinfo(CODESET)).to_str() } == Ok("UTF-8") {
+        titlepadding_symbol = "  ";
+        branch_symbol = "├─";
+        vertical_symbol = "│ ";
+        right_symbol = "└─";
+    }
+
+    if let Some(child_nodes) = nodes.get(&parent_node) {
+        for (index, parts) in child_nodes.iter().enumerate() {
             let mut row = parts.clone();
 
             if !is_root {
                 let mut branches_row = String::new();
                 for &branch in parent_branches {
-                    branches_row += if branch { "│ " } else { "  " };
+                    branches_row += if branch {
+                        vertical_symbol
+                    } else {
+                        titlepadding_symbol
+                    };
                 }
 
-                let is_last = index == sorted_child_nodes.len() - 1;
-                branches_row += if is_last { "└─" } else { "├─" };
+                let is_last = index == child_nodes.len() - 1;
+                branches_row += if is_last { right_symbol } else { branch_symbol };
 
                 row[tree_index] = branches_row + &row[tree_index];
             }
@@ -748,7 +740,7 @@ fn print_node_tree(
                 nodes,
                 parts[0].parse::<i32>().unwrap_or(0), // Ensure correct parsing
                 depth + 1,
-                &[parent_branches, &[index != sorted_child_nodes.len() - 1]].concat(),
+                &[parent_branches, &[index != child_nodes.len() - 1]].concat(),
                 false,
                 output,
                 tree_index,
@@ -771,46 +763,39 @@ pub fn tree_main(config: &mut Config) -> UResult<()> {
         ));
     }
 
-    if let Some(table_columns) = &config.table_columns {
-        if !table_columns.contains(tree_id) || !table_columns.contains(tree_parent) {
-            return Err(USimpleError::new(
-                EXIT_FAILURE,
-                "Error: tree-id and tree-parent must be in table-columns",
-            ));
-        }
-        // get the index of tree tree_id and tree_parent
-        let tree_index = table_columns
-            .iter()
-            .position(|column| column == tree)
-            .unwrap();
-        let tree_parent_index = table_columns
-            .iter()
-            .position(|column| column == tree_parent)
-            .unwrap();
-        let mut nodes: HashMap<i32, Vec<Vec<String>>> = HashMap::new();
-        for parts in &config.ents {
-            let parent_node = parts[tree_parent_index].parse::<i32>().unwrap_or(0);
-            nodes
-                .entry(parent_node)
-                .or_insert_with(Vec::new)
-                .push(parts.clone());
-        }
-        let mut output: Vec<Vec<String>> = Vec::new();
-        print_node_tree(&nodes, 0, 0, &[], true, &mut output, tree_index);
-        // Ensure ents and output have the same length
-        if config.ents.len() != output.len() {
-            eprintln!("Lengths of ents and output are different.");
-            return Err(USimpleError::new(
-                EXIT_FAILURE,
-                "Lengths of ents and output are different.",
-            ));
-        }
-        config.ents = output;
-        for row in &mut config.ents {
-            if let Some(col) = row.get_mut(tree_index) {
-                if col.starts_with("  ") && col.len() > 2 {
-                    *col = col[2..].to_string();
-                }
+    // get the index of tree tree_id and tree_parent
+    let tree_index = match parse_segment(tree, &config.table_columns) {
+        Ok(column) => column,
+        Err(e) => return Err(e),
+    };
+    let tree_parent_index = match parse_segment(tree_parent, &config.table_columns) {
+        Ok(column) => column,
+        Err(e) => return Err(e),
+    };
+    let mut nodes: HashMap<i32, Vec<Vec<String>>> = HashMap::new();
+    for parts in &config.ents {
+        let parent_node = parts[tree_parent_index].parse::<i32>().unwrap_or(0);
+        nodes
+            .entry(parent_node)
+            .or_insert_with(Vec::new)
+            .push(parts.clone());
+    }
+    let mut output: Vec<Vec<String>> = Vec::new();
+    print_node_tree(&nodes, 0, 0, &[], true, &mut output, tree_index);
+    // Ensure ents and output have the same length
+    if config.ents.len() != output.len() {
+        return Err(USimpleError::new(
+            EXIT_FAILURE,
+            "Lengths of ents and output are different.",
+        ));
+    }
+    config.ents = output;
+    for row in &mut config.ents {
+        if let Some(col) = row.get_mut(tree_index) {
+            if col.starts_with("  ") && col.len() > 2 {
+                *col = col[2..].to_string();
+            } else if col.starts_with(" ") && col.len() > 1 {
+                *col = col[1..].to_string();
             }
         }
     }
@@ -818,17 +803,20 @@ pub fn tree_main(config: &mut Config) -> UResult<()> {
 }
 
 /// Parse segment
-pub fn parse_segment(segment: &str, table_columns: &Option<Vec<String>>) -> usize {
+pub fn parse_segment(segment: &str, table_columns: &Option<Vec<String>>) -> UResult<usize> {
     if let Ok(index) = segment.parse::<usize>() {
-        index.saturating_sub(1)
+        Ok(index.saturating_sub(1))
     } else {
         if let Some(column_index) = table_columns
             .as_ref()
             .and_then(|columns| columns.iter().position(|name| name == segment))
         {
-            column_index
+            Ok(column_index)
         } else {
-            panic!("Column '{}' not found", segment);
+            Err(USimpleError::new(
+                EXIT_FAILURE,
+                format!("undefined column name '{}'", segment),
+            ))
         }
     }
 }
@@ -837,14 +825,23 @@ pub fn parse_segment(segment: &str, table_columns: &Option<Vec<String>>) -> usiz
 pub fn parse_columns(
     option: Option<&String>,
     table_columns: &Option<Vec<String>>,
-) -> Option<Vec<usize>> {
-    option.map(|value| {
-        value
-            .split(',')
-            .flat_map(|segment| segment.split_whitespace())
-            .map(|segment| parse_segment(segment, table_columns))
-            .collect()
-    })
+) -> UResult<Option<Vec<usize>>> {
+    match option {
+        Some(columns) => {
+            let mut res = Vec::new();
+            for column in columns
+                .split(',')
+                .flat_map(|segment| segment.split_whitespace())
+            {
+                match parse_segment(column, table_columns) {
+                    Ok(s) => res.push(s),
+                    Err(e) => return Err(e),
+                }
+            }
+            Ok(Some(res))
+        }
+        None => Ok(None),
+    }
 }
 
 /// Get terminal width
@@ -856,7 +853,17 @@ pub fn get_terminal_width(default_width: usize) -> usize {
 }
 
 /// Validate args
-pub fn validate_args(config: &Config) -> UResult<()> {
+pub fn validate_args(config: &mut Config) -> UResult<()> {
+    if config.tree.is_some() {
+        config.mode = ColumnMode::Table;
+        if config.tree_parent.is_none() || config.tree_id.is_none() {
+            return Err(USimpleError::new(
+                EXIT_FAILURE,
+                "options --tree-id and --tree-parent are required for tree formatting",
+            ));
+        }
+    }
+
     if config.mode != ColumnMode::Table {
         if config.table_order.is_some()
             || config.table_name.is_some()
