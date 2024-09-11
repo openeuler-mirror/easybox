@@ -1614,9 +1614,9 @@ pub fn read_proc(root_pid: i32, config: &Config) -> UResult<()> {
                     Err(_) => continue,
                 };
                 //find commands between()
-                if let (Some(start), Some(end)) = (readbuf.find('('), readbuf.find(')')) {
+                if let (Some(start), Some(end)) = (readbuf.find('('), readbuf.rfind(')')) {
                     let command = readbuf[start + 1..end].to_string();
-                    let rest = &readbuf[end + 1..];
+                    let rest = &readbuf[end + 2..];
                     let parts: Vec<&str> = rest.split_whitespace().collect();
                     if let (Some(ppid_str), Some(pgid_str), Some(proc_stt_jf_str)) =
                         (parts.get(1), parts.get(2), parts.get(19))

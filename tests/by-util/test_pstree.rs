@@ -118,7 +118,11 @@ fn test_pstree_hide_threads() {
 
 #[test]
 fn test_pstree_uid_change() {
-    new_ucmd!().arg("-u").succeeds().stdout_contains("easybox");
+    // Add `-l` to avoid easybox line being truncated.
+    new_ucmd!()
+        .args(&["-u", "-l"])
+        .succeeds()
+        .stdout_contains("easybox");
 }
 
 #[test]

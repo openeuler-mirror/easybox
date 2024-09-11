@@ -3,7 +3,7 @@ name = "oe_pstree"
 version = "0.0.1"
 authors = ["openeuler developers"]
 license = "MulanPSL-2.0"
-description = "pstree"
+description = "pstree ~ display a tree of processes"
 
 homepage = "https://gitee.com/openeuler/easybox"
 repository = "https://gitee.com/openeuler/easybox/tree/master/src/oe/pstree"
@@ -16,11 +16,9 @@ path = "src/pstree.rs"
 
 [dependencies]
 clap = { version = "3.2", features = ["wrap_help", "cargo"] }
-uucore = { version=">=0.0.16", package="uucore", path="../../uucore", features = ["encoding","libc"] }
-nix={version = "0.27.1",features = ["ioctl","fs","process"]}
-libc={version = "0.2.149"}
-users={version="0.11.0"}
-
+uucore = { version = ">=0.0.16", package = "uucore", path = "../../uucore", features = ["libc"] }
+nix = { version = "0.27.1", features = ["fs"] }
+users = { version="0.11.0" }
 
 [[bin]]
 name = "pstree"
