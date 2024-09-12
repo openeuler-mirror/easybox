@@ -195,14 +195,17 @@ def load_csv(file):
     table = {}
     cols = []
     rows = []
-    with open(file, "r") as csvfile:
-        reader = csv.DictReader(csvfile)
-        cols = list(filter(lambda x: x != "target", reader.fieldnames))
-        for row in reader:
-            t = Target(row["target"])
-            rows += [t]
-            del row["target"]
-            table[t] = dict([k, int(v)] for k, v in row.items())
+    try:
+        with open(file, "r") as csvfile:
+            reader = csv.DictReader(csvfile)
+            cols = list(filter(lambda x: x != "target", reader.fieldnames))
+            for row in reader:
+                t = Target(row["target"])
+                rows += [t]
+                del row["target"]
+                table[t] = dict([k, int(v)] for k, v in row.items())
+    except FileNotFoundError:
+        raise(f"{file} not exist!")
     return (table, rows, cols)
 
 
