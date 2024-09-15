@@ -16,7 +16,7 @@ path = "src/free.rs"
 
 [dependencies]
 clap = { version = "3.2.0", features = ["wrap_help", "cargo"] }
-uucore = { version=">=0.0.16", package="uucore", path="../../uucore", features = ["encoding"] }
+uucore = { version = ">=0.0.16", package = "uucore", path = "../../uucore", features = ["libc"] }
 
 [[bin]]
 name = "free"
