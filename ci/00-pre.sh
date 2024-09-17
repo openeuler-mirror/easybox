@@ -14,9 +14,9 @@ done
 
 # Install required tools if not already installed
 if [ ! -f "/etc/centos-release" ] && [ ! -f "/etc/fedora-release" ]; then
-    required_packages=("gcc" "openssl-libs" "python3-pip" "musl-gcc" "clang" "glibc-static" "libgcc" "util-linux-devel")
+    required_packages=("gcc" "openssl-libs" "python3-pip" "musl-gcc" "clang" "glibc-static" "libgcc" "pam-devel" "util-linux-devel")
 else
-    required_packages=("gcc" "openssl-libs" "python3-pip" "musl-gcc" "clang" "glibc-static" "libgcc")
+    required_packages=("gcc" "openssl-libs" "python3-pip" "musl-gcc" "clang" "glibc-static" "libgcc" "pam-devel")
 fi
 missing_packages=()
 
@@ -27,6 +27,11 @@ done
 if [ "${#missing_packages[@]}" -gt 0 ]; then
     sudo sed -i "s:repo.openeuler.org:repo.huaweicloud.com/openeuler:g" /etc/yum.repos.d/*.repo
     sudo yum install --refresh --disablerepo OS --disablerepo EPOL --disablerepo source --disablerepo update --disablerepo EPOL-UPDATE --disablerepo debuginfo -y "${missing_packages[@]}" || exit 1
+fi
+
+if [ ! -e "/usr/lib64/libclang.so" ]; then
+    sofile=`ls /usr/lib64/libclang.so* | head -1`
+    sudo ln -s $sofile /usr/lib64/libclang.so
 fi
 
 source ~/.bashrc

@@ -1,0 +1,16 @@
+#!/usr/bin/expect
+set timeout 60
+if {$argc == 1} {
+    spawn [lindex $argv 0] -H
+} else {
+    spawn [lindex $argv 0] [lindex $argv 1] -H
+}
+exec sleep 1
+expect "login:"
+send "login_test\r"
+expect "Password:"
+send "123\r"
+expect "login_test"
+exec sleep 0.5
+send "whoami && exit\r"
+expect eof
