@@ -84,3 +84,7 @@ mod test_groupadd;
 #[cfg(feature = "usermod")]
 #[path = "by-util/test_usermod.rs"]
 mod test_usermod;
+
+#[cfg(feature = "useradd")]
+#[path = "by-util/test_useradd.rs"]
+mod test_useradd;
