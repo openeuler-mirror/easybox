@@ -25,6 +25,10 @@ mod test_lspci;
 #[path = "by-util/test_pidof.rs"]
 mod test_pidof;
 
+#[cfg(feature = "pgrep")]
+#[path = "by-util/test_pgrep.rs"]
+mod test_pgrep;
+
 #[cfg(feature = "pstree")]
 #[path = "by-util/test_pstree.rs"]
 mod test_pstree;

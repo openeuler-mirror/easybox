@@ -1,0 +1,26 @@
+[package]
+name = "oe_pgrep"
+version = "0.0.1"
+authors = ["openeuler developers"]
+license = "MulanPSL-2.0"
+description = "pgrep ~ look up processes based on name and other attributes"
+
+homepage = "https://gitee.com/openeuler/easybox"
+repository = "https://gitee.com/openeuler/easybox/tree/master/src/oe/pgrep"
+keywords = ["coreutils", "easybox", "util-linux", "cli", "utility"]
+categories = ["command-line-utilities"]
+edition = "2021"
+
+[lib]
+path = "src/pgrep.rs"
+
+[dependencies]
+clap = { version = "3.2.0", features = ["wrap_help", "cargo"] }
+nix = { version = "0.27.1", features = ["feature"] }
+regex = "1.10.5"
+uucore = { version=">=0.0.16", package="uucore", path="../../uucore" }
+walkdir = "2.5.0"
+
+[[bin]]
+name = "pgrep"
+path = "src/main.rs"
