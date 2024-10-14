@@ -19,7 +19,11 @@ trap finish EXIT
 
 contains_chinese
 
-export PATH="$PATH:/home/jenkins/.local/bin"
+if [ -n "$JENKINS_HOME" ]; then
+    export PATH="$PATH:/home/jenkins/.local/bin"
+else
+    export PATH="$PATH:~/.local/bin"
+fi
 files="pre-commit codespell"
 pip3 install $files
 cargo check || exit 1
@@ -41,4 +45,10 @@ do
     egrep '#!\[deny\(warnings\)\]' $rustlist || sed -i '1i\#![deny(warnings)]' $rustlist 2>/dev/null || true
 done
 
-pre-commit run -vvv --all-files
+
+if [ -n "$JENKINS_HOME" ]; then
+    pre-commit run -vvv --all-files
+else
+    SKIP=cargo-test pre-commit run -vvv --all-files
+    echo "cargo-test skipped, please test your utilities by cargo."
+fi
