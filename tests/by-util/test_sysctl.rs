@@ -124,19 +124,19 @@ fn test_sysctl_read() {
     }
 
     for test_args in test_args_vec.iter() {
-        let expcted_result = unwrap_or_return!(expected_result_brief(
+        let expected_result = unwrap_or_return!(expected_result_brief(
             C_SYSCTL_PATH,
             &test_scenario,
-            &test_args
+            test_args
         ));
 
         test_scenario
             .ucmd()
-            .args(&test_args)
+            .args(test_args)
             .run()
-            .stdout_is(expcted_result.stdout_str())
-            .stderr_is(expcted_result.stderr_str())
-            .code_is(expcted_result.code());
+            .stdout_is(expected_result.stdout_str())
+            .stderr_is(expected_result.stderr_str())
+            .code_is(expected_result.code());
     }
 }
 
@@ -181,19 +181,19 @@ fn test_sysctl_write() {
     }
 
     for test_args in test_args_vec.iter() {
-        let expcted_result = unwrap_or_return!(expected_result_brief(
+        let expected_result = unwrap_or_return!(expected_result_brief(
             C_SYSCTL_PATH,
             &test_scenario,
-            &test_args
+            test_args
         ));
 
         test_scenario
             .ucmd()
-            .args(&test_args)
+            .args(test_args)
             .run()
-            .stdout_is(expcted_result.stdout_str())
-            .stderr_is(expcted_result.stderr_str())
-            .code_is(expcted_result.code());
+            .stdout_is(expected_result.stdout_str())
+            .stderr_is(expected_result.stderr_str())
+            .code_is(expected_result.code());
     }
 }
 
@@ -201,7 +201,7 @@ fn test_sysctl_write() {
 fn test_sysctl_others() {
     let test_scenario = TestScenario::new(util_name!());
 
-    let test_args_vec = vec![
+    let test_args_vec = [
         // Test for does nothing options.
         vec!["-o", "-x"],
         // Test for options -N and -q cannot coexist.
@@ -209,18 +209,18 @@ fn test_sysctl_others() {
     ];
 
     for test_args in test_args_vec.iter() {
-        let expcted_result = unwrap_or_return!(expected_result_brief(
+        let expected_result = unwrap_or_return!(expected_result_brief(
             C_SYSCTL_PATH,
             &test_scenario,
-            &test_args
+            test_args
         ));
 
         test_scenario
             .ucmd()
-            .args(&test_args)
+            .args(test_args)
             .run()
-            .stdout_is(expcted_result.stdout_str())
-            .stderr_is(expcted_result.stderr_str())
-            .code_is(expcted_result.code());
+            .stdout_is(expected_result.stdout_str())
+            .stderr_is(expected_result.stderr_str())
+            .code_is(expected_result.code());
     }
 }
