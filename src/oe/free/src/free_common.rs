@@ -5,13 +5,14 @@
 // For the full copyright and license information, please view the LICENSE file
 // that was distributed with this source code.
 
-use std::io::BufRead;
-use uucore::error::UResult;
-use uucore::format_usage;
-
+use clap::{crate_version, Arg, ArgAction, ArgGroup, Command};
 use std::fs::File;
-
-use clap::{crate_version, Arg, Command};
+use std::io::BufRead;
+use std::thread;
+use std::time::Duration;
+use uucore::error::{UResult, USimpleError};
+use uucore::format_usage;
+use uucore::libc::EXIT_FAILURE;
 
 /// MEMINFO
 pub static MEMINFO: &str = "/proc/meminfo";
@@ -80,12 +81,13 @@ pub struct Config {
     ///
     pub total: bool,
     ///
-    pub seconds: Option<u32>,
+    pub seconds: Option<f64>,
     ///
     pub count: Option<u32>,
     ///
     pub wide: bool,
 }
+
 /// options
 pub mod options {
     ///
@@ -128,29 +130,56 @@ pub mod options {
 
 impl Config {
     /// from stdin
-    pub fn from(options: &clap::ArgMatches) -> Self {
-        Self {
-            bytes: options.is_present(options::BYTES),
-            kilo: options.is_present(options::KILO),
-            mega: options.is_present(options::MEGA),
-            giga: options.is_present(options::GIGA),
-            tera: options.is_present(options::TERA),
-            peta: options.is_present(options::PETA),
-            kibi: options.is_present(options::KIBI),
-            mebi: options.is_present(options::MEBI),
-            gibi: options.is_present(options::GIBI),
-            tebi: options.is_present(options::TEBI),
-            pebi: options.is_present(options::PEBI),
-            human: options.is_present(options::HUMAN),
-            si: options.is_present(options::SI),
-            lohi: options.is_present(options::LOHI),
-            total: options.is_present(options::TOTAL),
-            seconds: options
-                .value_of(options::SECONDS)
-                .map(|v| v.parse().unwrap()),
-            count: options.value_of(options::COUNT).map(|v| v.parse().unwrap()),
-            wide: options.is_present(options::WIDE),
-        }
+    pub fn from(options: &clap::ArgMatches) -> UResult<Self> {
+        let seconds = match options.get_one::<f64>(options::SECONDS) {
+            Some(s) => {
+                // s * 1000000 < 1 in C.
+                if *s < 0.0 {
+                    return Err(USimpleError::new(
+                        EXIT_FAILURE,
+                        format!("seconds argument `{}' is not positive number", s),
+                    ));
+                } else {
+                    Some(*s)
+                }
+            }
+            None => None,
+        };
+
+        let count = match options.get_one::<u32>(options::COUNT) {
+            Some(c) => {
+                if *c < 1 {
+                    return Err(USimpleError::new(
+                        EXIT_FAILURE,
+                        format!("failed to parse count argument: '{}'", c),
+                    ));
+                } else {
+                    Some(*c)
+                }
+            }
+            None => None,
+        };
+
+        Ok(Self {
+            bytes: options.contains_id(options::BYTES),
+            kilo: options.contains_id(options::KILO),
+            mega: options.contains_id(options::MEGA),
+            giga: options.contains_id(options::GIGA),
+            tera: options.contains_id(options::TERA),
+            peta: options.contains_id(options::PETA),
+            kibi: options.contains_id(options::KIBI),
+            mebi: options.contains_id(options::MEBI),
+            gibi: options.contains_id(options::GIBI),
+            tebi: options.contains_id(options::TEBI),
+            pebi: options.contains_id(options::PEBI),
+            human: options.get_flag(options::HUMAN),
+            si: options.get_flag(options::SI),
+            lohi: options.get_flag(options::LOHI),
+            total: options.get_flag(options::TOTAL),
+            seconds,
+            count,
+            wide: options.get_flag(options::WIDE),
+        })
     }
 }
 
@@ -163,7 +192,7 @@ pub fn parse_free_cmd_args<'a>(
     let app = free_app(about, usage);
     let matches = app.get_matches_from_safe(args)?;
 
-    Ok(Config::from(&matches))
+    Ok(Config::from(&matches)?)
 }
 
 ///
@@ -173,173 +202,169 @@ pub fn free_app<'a>(about: &'a str, usage: &'a str) -> Command<'a> {
         .about(about)
         .override_usage(format_usage(usage))
         .infer_long_args(true)
+        .group(ArgGroup::new("unit").args(&[
+            "bytes", "kilo", "mega", "giga", "tera", "peta", "kibi", "mebi", "gibi", "tebi", "pebi",
+        ]))
         .arg(
-            Arg::new("bytes")
+            Arg::new(options::BYTES)
                 .short('b')
-                .long("bytes")
+                .long(options::BYTES)
                 .help("show output in bytes")
-                .conflicts_with_all(&[
-                    "kilo", "mega", "giga", "tera", "peta", "kibi", "mebi", "gibi", "tebi", "pebi",
-                ]),
+                .display_order(10),
         )
         .arg(
-            Arg::new("kilo")
-                .long("kilo")
+            Arg::new(options::KILO)
+                .long(options::KILO)
                 .help("show output in kilobytes")
-                .conflicts_with_all(&[
-                    "bytes", "mega", "giga", "tera", "peta", "kibi", "mebi", "gibi", "tebi", "pebi",
-                ]),
+                .display_order(20),
         )
         .arg(
-            Arg::new("mega")
-                .long("mega")
+            Arg::new(options::MEGA)
+                .long(options::MEGA)
                 .help("show output in megabytes")
-                .conflicts_with_all(&[
-                    "bytes", "kilo", "giga", "tera", "peta", "kibi", "mebi", "gibi", "tebi", "pebi",
-                ]),
+                .display_order(30),
         )
         .arg(
-            Arg::new("giga")
-                .long("giga")
+            Arg::new(options::GIGA)
+                .long(options::GIGA)
                 .help("show output in gigabytes")
-                .conflicts_with_all(&[
-                    "bytes", "kilo", "mega", "tera", "peta", "kibi", "mebi", "gibi", "tebi", "pebi",
-                ]),
+                .display_order(40),
         )
         .arg(
-            Arg::new("tera")
-                .long("tera")
+            Arg::new(options::TERA)
+                .long(options::TERA)
                 .help("show output in terabytes")
-                .conflicts_with_all(&[
-                    "bytes", "kilo", "mega", "giga", "peta", "kibi", "mebi", "gibi", "tebi", "pebi",
-                ]),
+                .display_order(50),
         )
         .arg(
-            Arg::new("peta")
-                .long("peta")
+            Arg::new(options::PETA)
+                .long(options::PETA)
                 .help("show output in petabytes")
-                .conflicts_with_all(&[
-                    "bytes", "kilo", "mega", "giga", "tera", "kibi", "mebi", "gibi", "tebi", "pebi",
-                ]),
+                .display_order(60),
         )
         .arg(
-            Arg::new("kibi")
+            Arg::new(options::KIBI)
                 .short('k')
-                .long("kibi")
+                .long(options::KIBI)
                 .help("show output in kibibytes")
-                .conflicts_with_all(&[
-                    "bytes", "kilo", "mega", "giga", "tera", "peta", "mebi", "gibi", "tebi", "pebi",
-                ]),
+                .display_order(70),
         )
         .arg(
-            Arg::new("mebi")
+            Arg::new(options::MEBI)
                 .short('m')
-                .long("mebi")
+                .long(options::MEBI)
                 .help("show output in mebibytes")
-                .conflicts_with_all(&[
-                    "bytes", "kilo", "mega", "giga", "tera", "peta", "kibi", "gibi", "tebi", "pebi",
-                ]),
+                .display_order(80),
         )
         .arg(
-            Arg::new("gibi")
+            Arg::new(options::GIBI)
                 .short('g')
-                .long("gibi")
+                .long(options::GIBI)
                 .help("show output in gibibytes")
-                .conflicts_with_all(&[
-                    "bytes", "kilo", "mega", "giga", "tera", "peta", "kibi", "mebi", "tebi", "pebi",
-                ]),
+                .display_order(90),
         )
         .arg(
-            Arg::new("tebi")
-                .long("tebi")
+            Arg::new(options::TEBI)
+                .long(options::TEBI)
                 .help("show output in tebibytes")
-                .conflicts_with_all(&[
-                    "bytes", "kilo", "mega", "giga", "tera", "peta", "kibi", "mebi", "gibi", "pebi",
-                ]),
+                .display_order(100),
         )
         .arg(
-            Arg::new("pebi")
-                .long("pebi")
+            Arg::new(options::PEBI)
+                .long(options::PEBI)
                 .help("show output in pebibytes")
-                .conflicts_with_all(&[
-                    "bytes", "kilo", "mega", "giga", "tera", "peta", "kibi", "mebi", "gibi", "tebi",
-                ]),
+                .display_order(110),
         )
         .arg(
-            Arg::new("human")
+            Arg::new(options::HUMAN)
                 .short('h')
-                .long("human")
-                .help("show human-readable output"),
+                .long(options::HUMAN)
+                .action(ArgAction::SetTrue)
+                .help("show human-readable output")
+                .display_order(120),
         )
         .arg(
-            Arg::new("si")
-                .long("si")
-                .help("use powers of 1000 not 1024"),
+            Arg::new(options::SI)
+                .long(options::SI)
+                .action(ArgAction::SetTrue)
+                .help("use powers of 1000 not 1024")
+                .display_order(130),
         )
         .arg(
-            Arg::new("lohi")
+            Arg::new(options::LOHI)
                 .short('l')
-                .long("lohi")
-                .help("show detailed low and high memory statistics"),
+                .long(options::LOHI)
+                .action(ArgAction::SetTrue)
+                .help("show detailed low and high memory statistics")
+                .display_order(140),
         )
         .arg(
-            Arg::new("total")
+            Arg::new(options::TOTAL)
                 .short('t')
-                .long("total")
-                .help("show total for RAM + swap"),
+                .long(options::TOTAL)
+                .action(ArgAction::SetTrue)
+                .help("show total for RAM + swap")
+                .display_order(150),
         )
         .arg(
-            Arg::new("seconds")
+            Arg::new(options::SECONDS)
                 .short('s')
-                .long("seconds")
+                .long(options::SECONDS)
                 .takes_value(true)
-                .help("repeat printing every N seconds"),
+                .value_name("N")
+                .action(clap::ArgAction::Set)
+                .value_parser(clap::value_parser!(f64))
+                .help("repeat printing every N seconds")
+                .display_order(170),
         )
         .arg(
-            Arg::new("count")
+            Arg::new(options::COUNT)
                 .short('c')
-                .long("count")
+                .long(options::COUNT)
                 .takes_value(true)
-                .help("repeat printing N times, then exit"),
+                .value_name("N")
+                .action(ArgAction::Set)
+                .value_parser(clap::value_parser!(u32))
+                .help("repeat printing N times, then exit")
+                .display_order(180),
         )
-        .arg(Arg::new("wide").short('w').long("wide").help("wide output"))
+        .arg(
+            Arg::new(options::WIDE)
+                .short('w')
+                .long(options::WIDE)
+                .action(ArgAction::SetTrue)
+                .help("wide output")
+                .display_order(190),
+        )
 }
 
 /// handle input
 pub fn handle_input(config: &Config) -> UResult<()> {
-    if config.seconds.is_some() && config.count.is_none() {
-        loop {
-            print_memory(config);
-            std::thread::sleep(std::time::Duration::from_secs(
-                config.seconds.unwrap() as u64
-            ));
-        }
-    }
-    if config.count.is_some() && config.seconds.is_none() {
-        for _ in 0..config.count.unwrap() {
-            print_memory(config);
-            std::thread::sleep(std::time::Duration::from_secs(1));
-        }
-    }
-    if config.count.is_some() && config.seconds.is_some() {
-        for _ in 0..config.count.unwrap() {
-            print_memory(config);
-            std::thread::sleep(std::time::Duration::from_secs(
-                config.seconds.unwrap() as u64
-            ));
-        }
-    }
-    if config.count.is_none() && config.seconds.is_none() {
+    let mut repeat_count = config.count.unwrap_or(1);
+    let repeat_dur = Duration::from_nanos((config.seconds.unwrap_or(1.0) * 1_000_000_000.0) as u64);
+
+    loop {
         print_memory(config);
+
+        if !(config.count.is_none() && config.seconds.is_some()) {
+            repeat_count -= 1;
+        }
+
+        if repeat_count < 1 {
+            break;
+        }
+
+        println!("");
+        thread::sleep(repeat_dur);
     }
+
     Ok(())
 }
 
 fn print_memory(config: &Config) {
-    let unit = anaylze_unit(config);
+    let unit = analyze_unit(config);
     if config.human {
         hum_print(&get_mem_info(), config.lohi, config.total, config.wide);
-        return;
     } else {
         raw_print(
             &get_mem_info(),
@@ -350,6 +375,7 @@ fn print_memory(config: &Config) {
         );
     }
 }
+
 /// Get the memory info.
 fn get_mem_info() -> MemInfo {
     let mut mem_info = MemInfo {
@@ -469,58 +495,22 @@ fn convert_unit(value: u64, unit: &Unit) -> u64 {
     }
 }
 
-fn anaylze_unit(config: &Config) -> Unit {
-    let mut unit: Unit = Unit::Kibi;
-    if config.si {
-        if config.bytes {
-            unit = Unit::Bytes;
-        } else if config.kilo {
-            unit = Unit::Kilo;
-        } else if config.mega {
-            unit = Unit::Mega;
-        } else if config.giga {
-            unit = Unit::Giga;
-        } else if config.tera {
-            unit = Unit::Tera;
-        } else if config.peta {
-            unit = Unit::Peta;
-        } else if config.kibi {
-            unit = Unit::Kilo;
-        } else if config.mebi {
-            unit = Unit::Mega;
-        } else if config.gibi {
-            unit = Unit::Giga;
-        } else if config.tebi {
-            unit = Unit::Tera;
-        } else if config.pebi {
-            unit = Unit::Peta;
-        }
-    } else {
-        if config.bytes {
-            unit = Unit::Bytes;
-        } else if config.kilo {
-            unit = Unit::Kilo;
-        } else if config.mega {
-            unit = Unit::Mega;
-        } else if config.giga {
-            unit = Unit::Giga;
-        } else if config.tera {
-            unit = Unit::Tera;
-        } else if config.peta {
-            unit = Unit::Peta;
-        } else if config.kibi {
-            unit = Unit::Kibi;
-        } else if config.mebi {
-            unit = Unit::Mebi;
-        } else if config.gibi {
-            unit = Unit::Gibi;
-        } else if config.tebi {
-            unit = Unit::Tebi;
-        } else if config.pebi {
-            unit = Unit::Pebi;
-        }
+fn analyze_unit(config: &Config) -> Unit {
+    match config {
+        _ if config.bytes => Unit::Bytes,
+        _ if config.kilo || (config.si && config.kibi) => Unit::Kilo,
+        _ if config.mega || (config.si && config.mebi) => Unit::Mega,
+        _ if config.giga || (config.si && config.gibi) => Unit::Giga,
+        _ if config.tera || (config.si && config.tebi) => Unit::Tera,
+        _ if config.peta || (config.si && config.pebi) => Unit::Peta,
+        _ if config.kibi => Unit::Kibi,
+        _ if config.mebi => Unit::Mebi,
+        _ if config.gibi => Unit::Gibi,
+        _ if config.tebi => Unit::Tebi,
+        _ if config.pebi => Unit::Pebi,
+        _ if config.si => Unit::Kilo,
+        _ => Unit::Kibi,
     }
-    unit
 }
 
 fn get_suit_unit(num: u64) -> HumanUnit {
