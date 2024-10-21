@@ -76,3 +76,7 @@ mod test_killall;
 #[cfg(feature = "md5sum")]
 #[path = "by-util/test_md5sum.rs"]
 mod test_md5sum;
+
+#[cfg(feature = "groupadd")]
+#[path = "by-util/test_groupadd.rs"]
+mod test_groupadd;
