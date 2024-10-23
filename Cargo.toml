@@ -45,6 +45,7 @@ linux = [
     "sysctl",
     "pgrep",
     "groupadd",
+    "usermod",
 ]
 ##
 # * bypass/override ~ translate 'test' feature name to avoid dependency collision with rust core 'test' crate (o/w surfaces as compiler errors during testing)
@@ -74,6 +75,7 @@ members = [
   "src/oe/sysctl",
   "src/oe/pgrep",
   "src/oe/groupadd",
+  "src/oe/usermod",
 ]
 
 [dependencies]
@@ -109,7 +111,7 @@ md5sum  = { optional=true, version="0.0.1", package="oe_md5sum", path="src/oe/md
 sysctl = { optional=true, version="0.0.1", package="oe_sysctl", path="src/oe/sysctl" }
 pgrep = { optional=true, version="0.0.1", package="oe_pgrep", path="src/oe/pgrep" }
 groupadd = { optional=true, version="0.0.1", package="oe_groupadd", path="src/oe/groupadd" }
-
+usermod = { optional=true, version="0.0.1", package="oe_usermod", path="src/oe/usermod" }
 
 # this breaks clippy linting with: "tests/by-util/test_factor_benches.rs: No such file or directory (os error 2)"
 # factor_benches = { optional = true, version = "0.0.0", package = "uu_factor_benches", path = "tests/benches/factor" }

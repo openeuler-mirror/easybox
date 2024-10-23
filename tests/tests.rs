@@ -80,3 +80,7 @@ mod test_md5sum;
 #[cfg(feature = "groupadd")]
 #[path = "by-util/test_groupadd.rs"]
 mod test_groupadd;
+
+#[cfg(feature = "usermod")]
+#[path = "by-util/test_usermod.rs"]
+mod test_usermod;
