@@ -69,6 +69,10 @@ mod test_column;
 #[path = "by-util/test_sha256sum.rs"]
 mod test_sha256sum;
 
+#[cfg(feature = "iostat")]
+#[path = "by-util/test_iostat.rs"]
+mod test_iostat;
+
 #[cfg(feature = "killall")]
 #[path = "by-util/test_killall.rs"]
 mod test_killall;
