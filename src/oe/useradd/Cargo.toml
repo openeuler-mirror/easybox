@@ -1,0 +1,29 @@
+[package]
+name = "oe_useradd"
+version = "0.0.1"
+authors = ["openeuler developers"]
+license = "MulanPSL-2.0"
+description = "Add the group to the system."
+
+homepage = "https://gitee.com/openeuler/easybox"
+repository = "https://gitee.com/openeuler/easybox/tree/master/src/oe/useradd"
+keywords = ["xfsattr", "easybox", "util-linux", "cli", "utility"]
+categories = ["command-line-utilities"]
+edition = "2021"
+
+[lib]
+path = "src/useradd.rs"
+
+[dependencies]
+clap = { version = "3.2.0", features = ["wrap_help", "cargo"] }
+uucore = { version=">=0.0.16", package="uucore", path="../../uucore"}
+nix = { version = "0.27.1", features = ["user", "fs", "socket", "dir"] }
+libc = "0.2.152"
+linked-hash-map = "0.5.4"
+chrono = "0.4"
+lazy_static = "1.4"
+
+
+[[bin]]
+name = "useradd"
+path = "src/main.rs"
