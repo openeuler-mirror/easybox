@@ -1,31 +1,66 @@
 # easybox
 
-#### 介绍
-easyBox是一个基础命令行的项目，该项目使用rust语言重写Linux下的基础命令，支持服务器场景以及嵌入式场景。该项目优先会支持当前还未进行rust重构的基础软件，并借助rust的安全能力，提供更为安全的操作系统基础命令。当前项目处于启动阶段，欢迎社区开发者参与ISSUE讨论以及命令的开发。
+简体中文 | [English](./README.en.md)
 
-#### 软件架构
-待补充
+easyBox 是一个基础命令行的项目，该项目使用 Rust 语言重写 Linux 下的基础命令，支持服务器场景以及嵌入式场景。该项目优先会支持当前还未进行 Rust 重构的基础软件，并借助 Rust 的安全能力，提供更为安全的操作系统基础命令。当前项目处于启动阶段，欢迎社区开发者参与 ISSUE 讨论以及命令的开发。
 
+## 环境要求
 
-#### 安装教程
-待补充
+Rust (`cargo`, `rustc`) >= 1.65.0
 
-#### 使用说明
-待补充
+## 构建方法
 
-#### 参与贡献
+我们使用 Cargo 来构建 easybox 二进制文件。
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+我们首先需要拉取仓库：
 
+```shell
+git clone https://gitee.com/openeuler/easybox
+cd easybox
+```
 
-#### 特技
+然后我们可以使用 Cargo 构建 easybox，该流程与其他 Rust 程序相同：
 
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+```shell
+cargo build --release
+```
+
+此命令将 easybox 构建为名为 “easybox” 的多调用（BusyBox-type）二进制文件。
+
+如果你不想将每个工具都构建到最终二进制文件中，你可以手动指定需要构建的工具。例如：
+
+```shell
+cargo build --features "base32 sysctl" --no-default-features
+```
+
+如果您不想构建多调用二进制文件，也可以将每个工具构建为单独的二进制文件。每个工具都包含在主仓库中的自己的包中，名为 “oe_UTILNAME”。要构建单独的二进制文件，可使用 Cargo 仅构建特定包（使用 `--package` [又名 `-p`] 选项）。例如：
+
+```shell
+cargo build -p oe_base32 -p oe_sysctl
+```
+
+## 安装方法
+
+使用 Cargo 安装 easybox：
+
+```shell
+cargo install --path . --locked
+```
+
+此命令将 easybox 安装到 Cargo 的 _bin_ 文件夹中（例如 `$HOME/.cargo/bin`）。之后，可以通过 `$HOME/.cargo/bin/easybox [util] [util options]` 使用 easybox。
+
+## 卸载方法
+
+使用 Cargo 卸载 easybox：
+
+```shell
+cargo uninstall easybox
+```
+
+## 参与贡献
+
+参与 easybox 贡献，请参阅 [CONTRIBUTING](CONTRIBUTING.md) 文件。
+
+## LICENSE
+
+easybox 使用 MulanPSL-2.0 许可证，详细信息请参阅 [LICENSE](LICENSE) 文件。
