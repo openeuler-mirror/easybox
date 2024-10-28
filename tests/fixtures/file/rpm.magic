@@ -1,0 +1,6 @@
+0	belong		0xedabeedb	RPM
+!:mime	application/x-rpm
+>4	byte		x		v%d
+>5	byte		x		\b.%d
+>6	beshort		0		bin
+>>8	beshort		19		AArch64
