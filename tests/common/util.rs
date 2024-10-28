@@ -4,7 +4,6 @@
 //  * file that was distributed with this source code.
 
 //spell-checker: ignore (linux) rlimit prlimit coreutil ggroups
-
 #![allow(dead_code)]
 
 use pretty_assertions::assert_eq;
@@ -1269,7 +1268,7 @@ pub fn host_name_for(util_name: &str) -> Cow<str> {
 // macos-latest: 8.32
 const VERSION_MIN: &str = "8.30"; // minimum Version for the reference `coreutil` in `$PATH`
 
-const UUTILS_WARNING: &str = "uutils-tests-warning";
+pub const UUTILS_WARNING: &str = "uutils-tests-warning";
 const UUTILS_INFO: &str = "uutils-tests-info";
 
 /// Run `util_name --version` and return Ok if the version is >= `version_expected`.

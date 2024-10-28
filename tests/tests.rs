@@ -21,6 +21,10 @@ mod test_hwclock;
 #[path = "by-util/test_lspci.rs"]
 mod test_lspci;
 
+#[cfg(feature = "login")]
+#[path = "by-util/test_login.rs"]
+mod test_login;
+
 #[cfg(feature = "pidof")]
 #[path = "by-util/test_pidof.rs"]
 mod test_pidof;

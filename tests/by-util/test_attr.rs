@@ -17,7 +17,6 @@ use crate::common::util::*;
 const TEST_FILE: &str = "attr_test_file";
 const TEST_LINK_FILE: &str = "attr_test_link";
 const C_ATTR_PATH: &str = "/usr/bin/attr";
-const UUTILS_WARNING: &str = "uutils-tests-warning";
 
 #[cfg(unix)]
 pub fn run_cmd_as_root_ignore_ci<S: AsRef<OsStr>>(
