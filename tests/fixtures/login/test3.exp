@@ -6,7 +6,7 @@ if {$argc == 1} {
     spawn [lindex $argv 0] [lindex $argv 1] login_test
 }
 
-exec sleep 1
+exec sleep 2
 expect "Password:"
 send "123\r"
 

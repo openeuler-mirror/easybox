@@ -5,7 +5,7 @@ if {$argc == 1} {
 } else {
     spawn [lindex $argv 0] [lindex $argv 1] -f login_test
 }
-exec sleep 1
+exec sleep 2
 expect "login_test"
 exec sleep 0.5
 send "whoami && exit\r"

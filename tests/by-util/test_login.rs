@@ -95,7 +95,7 @@ fn run_and_compare(ts: &TestScenario, args: &[&str], exp_script: &str) {
     let c_res = c_command.run();
     let rust_res = rust_command.run();
 
-    // println!("c_res: {}\n{}", c_res.stdout_str(), c_res.stderr_str());
+    println!("c_res: {}\n{}", c_res.stdout_str(), c_res.stderr_str());
     println!(
         "rust_res: {}\n{}",
         rust_res.stdout_str(),
