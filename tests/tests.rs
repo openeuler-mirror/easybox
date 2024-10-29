@@ -77,6 +77,10 @@ mod test_column;
 #[path = "by-util/test_sha256sum.rs"]
 mod test_sha256sum;
 
+#[cfg(feature = "grep")]
+#[path = "by-util/test_grep.rs"]
+mod test_grep;
+
 #[cfg(feature = "iostat")]
 #[path = "by-util/test_iostat.rs"]
 mod test_iostat;
