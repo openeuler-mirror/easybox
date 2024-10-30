@@ -1,0 +1,41 @@
+[package]
+name = "oe_grep"
+version = "0.0.1"
+authors = ["openeuler developers"]
+license = "MulanPSL-2.0"
+description = "grep prints lines that contain a match for one or more patterns."
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+homepage = "https://gitee.com/openeuler/easybox"
+repository = "https://github.com/uutils/coreutils/tree/main/src/oe/grep"
+keywords = ["coreutils", "easybox", "util-linux", "cli", "utility"]
+categories = ["command-line-utilities"]
+edition = "2021"
+
+[lib]
+path = "src/grep.rs"
+
+[dev-dependencies]
+walkdir = "2"
+
+[dependencies]
+clap = { version = "3.2.0", features = ["wrap_help", "cargo", "derive"] }
+uucore = { version=">=0.0.16", package="uucore", path="../../uucore", features = ["encoding"] }
+termcolor = "1.0.4"
+walkdir = "2.2.7"
+regex = "1"
+aho-corasick = "0.7"
+fancy-regex = "0.7"
+encoding_rs = "0.8"
+encoding_rs_io = "0.1"
+rayon = "1.5"
+glob = "0.3"
+atty = "0.2.14"
+
+[[bin]]
+name = "grep"
+path = "src/main.rs"
+
+[features]
+default = []
