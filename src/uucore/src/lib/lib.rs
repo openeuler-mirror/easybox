@@ -39,10 +39,15 @@ pub use crate::features::fsext;
 pub use crate::features::lines;
 #[cfg(feature = "memo")]
 pub use crate::features::memo;
+#[cfg(feature = "mount")]
+pub use crate::features::mount;
 #[cfg(feature = "pretty_float")]
 pub use crate::features::pretty_float;
 #[cfg(feature = "ringbuffer")]
 pub use crate::features::ringbuffer;
+
+#[cfg(feature = "umount")]
+pub use crate::features::umount;
 
 // * (platform-specific) feature-gated modules
 // ** non-windows (i.e. Unix + Fuchsia)
