@@ -1,0 +1,28 @@
+[package]
+name = "oe_chage"
+version = "0.0.1"
+authors = ["openeuler developers"]
+license = "MulanPSL-2.0"
+description = "chage"
+
+homepage = "https://gitee.com/openeuler/easybox"
+repository = "https://gitee.com/openeuler/easybox/tree/master/src/oe/chage"
+keywords = ["coreutils", "easybox", "util-linux", "cli", "utility"]
+categories = ["command-line-utilities"]
+edition = "2021"
+
+[lib]
+path = "src/chage.rs"
+
+[dependencies]
+clap = { version = "3.2", features = ["wrap_help", "cargo"] }
+uucore = { version=">=0.0.16", package="uucore", path="../../uucore", features = ["encoding","libc"] }
+libc = { version = "0.2.149" }
+users = { version = "0.11" }
+chrono = { version = "0.4.38" }
+nix = { version = "0.27.1", features = ["fs"] }
+
+
+[[bin]]
+name = "chage"
+path = "src/main.rs"

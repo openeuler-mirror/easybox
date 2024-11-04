@@ -9,6 +9,10 @@ mod test_attr;
 #[path = "by-util/test_base32.rs"]
 mod test_base32;
 
+#[cfg(feature = "chage")]
+#[path = "by-util/test_chage.rs"]
+mod test_chage;
+
 #[cfg(feature = "file")]
 #[path = "by-util/test_file.rs"]
 mod test_file;
