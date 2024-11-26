@@ -6,10 +6,12 @@
 // that was distributed with this source code.
 
 use crate::common::util::*;
+use rand::Rng;
 use regex::Regex;
-use std::{path::Path, process, sync::Mutex, time::Duration};
+use std::{fs, os::unix::fs::symlink, path::Path, process, sync::Mutex, time::Duration};
 
 const C_PGREP_PATH: &str = "/usr/bin/pgrep";
+const C_SLEEP_PATH: &str = "/usr/bin/sleep";
 
 const EXIT_USAGE: i32 = 2;
 const MULTIPLE_PIDS: &str = "(?m)^[1-9][0-9]*$";
@@ -97,19 +99,26 @@ fn test_pgrep() {
     let not_gid = &(gid.parse::<u32>().unwrap() + 1).to_string();
     let multiple_gids = &format!("{},{}", gid, not_gid);
 
-    let test_proc_comm = "test_proc.sh";
-    let test_proc_trim = "test_pro";
-    let test_proc_upper = "TEST_PROC.SH";
-    let test_proc_arg = "arg";
-    let test_proc_path = &format!("/bin/bash ./{}", test_proc_comm);
-    let test_proc_full = &format!("{} {}", test_proc_path, test_proc_arg);
+    let test_proc_comm: &str = &format!("tp_{}", rand::thread_rng().gen_range(100000..=999999));
+    let test_proc_path = &format!("/tmp/{}", test_proc_comm);
+    if symlink(C_SLEEP_PATH, test_proc_path).is_err() {
+        panic!("symlink failed.");
+    }
+
+    let test_proc_trim = &test_proc_comm[..7];
+    let test_proc_upper = &test_proc_comm.to_uppercase();
+    let test_proc_arg_1 = "10";
+    let test_proc_arg_2 = "11";
+    let test_proc_full = &format!("{} {}", test_proc_path, test_proc_arg_1);
     let mut test_proc_1 = test_scenario
-        .cmd(format!("./{}", test_proc_comm))
-        .arg(test_proc_arg)
+        .cmd(test_proc_path)
+        .arg(test_proc_arg_1)
         .run_no_wait();
     let mut test_proc_2 = test_scenario
-        .cmd(format!("./{}", test_proc_comm))
+        .cmd(test_proc_path)
+        .arg(test_proc_arg_2)
         .run_no_wait();
+    let _ = fs::remove_file(test_proc_path);
     std::thread::sleep(Duration::from_millis(50));
 
     let test_proc_1_sid_cmd = test_scenario
@@ -369,15 +378,14 @@ fn test_pgrep_pidfile_from_stdin() {
         return;
     }
 
-    let test_proc_comm = "test_proc.sh";
-    let test_proc_arg = "arg";
-    let mut test_proc_1 = test_scenario
-        .cmd(format!("./{}", test_proc_comm))
-        .arg(test_proc_arg)
-        .run_no_wait();
-    let mut test_proc_2 = test_scenario
-        .cmd(format!("./{}", test_proc_comm))
-        .run_no_wait();
+    let test_proc_comm: &str = &format!("tp_{}", rand::thread_rng().gen_range(100000..=999999));
+    let test_proc_path = &format!("/tmp/{}", test_proc_comm);
+    if symlink(C_SLEEP_PATH, test_proc_path).is_err() {
+        panic!("symlink failed.");
+    }
+    let mut test_proc_1 = test_scenario.cmd(test_proc_path).arg("10").run_no_wait();
+    let mut test_proc_2 = test_scenario.cmd(test_proc_path).arg("11").run_no_wait();
+    let _ = fs::remove_file(test_proc_path);
     std::thread::sleep(Duration::from_millis(50));
 
     let pidfile_contents = [
@@ -422,15 +430,14 @@ fn test_pgrep_pidfile_from_file() {
         return;
     }
 
-    let test_proc_comm = "test_proc.sh";
-    let test_proc_arg = "arg";
-    let mut test_proc_1 = test_scenario
-        .cmd(format!("./{}", test_proc_comm))
-        .arg(test_proc_arg)
-        .run_no_wait();
-    let mut test_proc_2 = test_scenario
-        .cmd(format!("./{}", test_proc_comm))
-        .run_no_wait();
+    let test_proc_comm: &str = &format!("tp_{}", rand::thread_rng().gen_range(100000..=999999));
+    let test_proc_path = &format!("/tmp/{}", test_proc_comm);
+    if symlink(C_SLEEP_PATH, test_proc_path).is_err() {
+        panic!("symlink failed.");
+    }
+    let mut test_proc_1 = test_scenario.cmd(test_proc_path).arg("10").run_no_wait();
+    let mut test_proc_2 = test_scenario.cmd(test_proc_path).arg("11").run_no_wait();
+    let _ = fs::remove_file(test_proc_path);
     std::thread::sleep(Duration::from_millis(50));
 
     let pidfile_name = "pgrep_pidfile";
