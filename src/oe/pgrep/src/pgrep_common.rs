@@ -12,11 +12,11 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::process;
 use uucore::error::{UResult, USimpleError};
-use uucore::libc::{getgrnam, getpgrp, getpwnam, getsid, EXIT_FAILURE};
-use uucore::msg_log::warnx_c;
+use uucore::libc::{getgrnam, getpgrp, getpwnam, getsid, EXIT_FAILURE, SIGTERM};
 use uucore::{format_usage, util_name};
 
 use crate::process::{walk_process, ProcessInformation};
+use crate::signals::signal_name_to_number;
 
 ///
 const EXIT_NO_MATCH: i32 = 1;
@@ -55,8 +55,8 @@ pub struct Config {
     pub parent: Vec<usize>,
     ///
     pub session: Vec<usize>,
-    /// TODO
-    pub signal: Option<String>,
+    ///
+    pub signal: i32,
     ///
     pub terminal: Vec<String>,
     ///
@@ -81,6 +81,8 @@ pub struct Config {
     pub env: Vec<String>,
     ///
     pub pattern: String,
+    ///
+    pub require_handler: bool,
 }
 
 /// options.
@@ -143,6 +145,8 @@ pub mod options {
     pub static ENV: &str = "env";
     ///
     pub static PATTERN: &str = "pattern";
+    ///
+    pub static REQUIRE_HANDLER: &str = "require-handler";
 }
 
 impl Config {
@@ -236,7 +240,30 @@ impl Config {
             }
         }
 
-        let signal = options.get_one::<String>(options::SIGNAL).cloned();
+        let mut signal: i32 = -1;
+        match options.get_one::<String>(options::SIGNAL) {
+            Some(signal_str) => match signal_name_to_number(signal_str) {
+                Some(sig_val) => signal = sig_val,
+                None => {
+                    let number_str: String = signal_str
+                        .chars()
+                        .take_while(|c| c.is_ascii_digit())
+                        .collect();
+                    if !number_str.is_empty() {
+                        if let Ok(sig_val) = number_str.parse::<i32>() {
+                            signal = sig_val;
+                        }
+                    }
+                    if signal == -1 {
+                        return Err(USimpleError::new(
+                            EXIT_USAGE,
+                            &format!("Unknown signal \"{}\".", signal_str),
+                        ));
+                    }
+                }
+            },
+            None => signal = SIGTERM,
+        };
 
         let terminal: Vec<String> = options
             .get_many::<String>(options::TERMINAL)
@@ -392,7 +419,8 @@ impl Config {
                 && !options.contains_id(options::RUNSTATES)
                 && !options.contains_id(options::NS)
                 && !options.contains_id(options::CGROUP)
-                && !options.contains_id(options::ENV))
+                && !options.contains_id(options::ENV)
+                && !options.get_flag(options::REQUIRE_HANDLER))
         {
             return Err(USimpleError::new(
                 EXIT_USAGE,
@@ -432,6 +460,7 @@ impl Config {
             nslist,
             env,
             pattern,
+            require_handler: options.get_flag(options::REQUIRE_HANDLER),
         })
     }
 
@@ -752,6 +781,13 @@ pub fn pgrep_app<'a>(about: &'a str, usage: &'a str) -> Command<'a> {
                 .help("output version information and exit")
                 .display_order(300),
         )
+        .arg(
+            Arg::new(options::REQUIRE_HANDLER)
+                .short('H')
+                .long(options::REQUIRE_HANDLER)
+                .action(clap::ArgAction::SetTrue)
+                .hide(true)
+        )
         .arg(Arg::new(options::PATTERN).hide(true).multiple_values(true).action(clap::ArgAction::Append))
 }
 
@@ -807,6 +843,22 @@ fn environ_match(envs_to_find: &[String], process_envs_str: String) -> bool {
     false
 }
 
+fn signal_handler_match(signal_to_find: i32, process_sigcgt_str: String) -> bool {
+    let process_sigcgt_unhex = match u64::from_str_radix(&process_sigcgt_str, 16) {
+        Ok(value) => value,
+        Err(_) => {
+            eprintln!("{}: not a hex string: {}", util_name(), process_sigcgt_str);
+            0
+        }
+    };
+
+    if signal_to_find <= 0 || signal_to_find > 64 {
+        false
+    } else {
+        ((1u64 << (signal_to_find - 1)) & process_sigcgt_unhex) != 0
+    }
+}
+
 /// Collect pids with filter construct from command line arguments.
 fn collect_matched_processes(regex: Regex, config: &Config) -> Vec<ProcessInformation> {
     let pgrep_pid = process::id();
@@ -832,7 +884,7 @@ fn collect_matched_processes(regex: Regex, config: &Config) -> Vec<ProcessInform
         Vec::new()
     };
 
-    // TODO: signal ns nslist
+    // TODO: ns nslist
     for mut process in walk_process(config.lightweight) {
         let mut matched = true;
 
@@ -931,6 +983,13 @@ fn collect_matched_processes(regex: Regex, config: &Config) -> Vec<ProcessInform
             matched = false;
         }
 
+        if matched
+            && config.require_handler
+            && !signal_handler_match(config.signal, process.sigcatch().unwrap_or_default())
+        {
+            matched = false;
+        }
+
         if matched && !config.pattern.is_empty() {
             let cmd_search = if config.full {
                 process.cmdline().unwrap_or_default()
@@ -974,8 +1033,8 @@ fn collect_matched_processes(regex: Regex, config: &Config) -> Vec<ProcessInform
         && !config.pattern.contains('|')
         && !config.pattern.contains('[')
     {
-        warnx_c(
-            &format!("pattern that searches for process name longer than 15 characters will result in zero matches\nTry `{} -f' option to match against the complete command line.", util_name())
+        eprintln!(
+            "{}: pattern that searches for process name longer than 15 characters will result in zero matches\nTry `{} -f' option to match against the complete command line.", util_name(), util_name()
         );
     }
 

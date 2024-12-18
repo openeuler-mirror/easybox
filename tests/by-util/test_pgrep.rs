@@ -8,11 +8,20 @@
 use crate::common::util::*;
 use rand::Rng;
 use regex::Regex;
-use std::{fs, os::unix::fs::symlink, path::Path, process, sync::Mutex, time::Duration};
+use std::{
+    fs::{self, File},
+    io::{self, BufRead},
+    os::unix::fs::symlink,
+    path::Path,
+    process,
+    sync::Mutex,
+    time::Duration,
+};
 
 const C_PGREP_PATH: &str = "/usr/bin/pgrep";
 const C_SLEEP_PATH: &str = "/usr/bin/sleep";
 
+const EXIT_NO_MATCH: i32 = 1;
 const EXIT_USAGE: i32 = 2;
 const MULTIPLE_PIDS: &str = "(?m)^[1-9][0-9]*$";
 
@@ -474,4 +483,72 @@ fn test_pgrep_pidfile_from_file() {
 
     let _ = test_proc_1.kill();
     let _ = test_proc_2.kill();
+}
+
+#[test]
+fn test_pgrep_signal() {
+    let _lock = MUX.lock();
+    let test_scenario = TestScenario::new(util_name!());
+
+    if !Path::new(C_PGREP_PATH).exists() {
+        println!("Executable file {} not exist.", C_PGREP_PATH);
+        return;
+    }
+
+    let test_proc_comm: &str = &format!("tp_{}", rand::thread_rng().gen_range(100000..=999999));
+    let test_proc_path = &format!("/tmp/{}", test_proc_comm);
+    if symlink(C_SLEEP_PATH, test_proc_path).is_err() {
+        panic!("symlink failed.");
+    }
+    let mut test_proc = test_scenario.cmd(test_proc_path).arg("10").run_no_wait();
+    let _ = fs::remove_file(test_proc_path);
+    std::thread::sleep(Duration::from_millis(50));
+
+    let file = File::open(format!("/proc/{}/status", test_proc.id())).unwrap();
+    let reader = io::BufReader::new(file);
+    for line in reader.lines() {
+        let line = line.unwrap();
+        if line.starts_with("SigCgt:") {
+            let sigcgt_value = line.split_whitespace().nth(1).unwrap();
+            if let Ok(num) = u64::from_str_radix(sigcgt_value, 16) {
+                let bin_str = format!("{:064b}", num);
+                println!("SigCgt binary: {}", bin_str);
+                for (i, bit) in bin_str.chars().enumerate() {
+                    println!("Bit {}: {}", i, bit);
+                    if bit == '0' {
+                        test_scenario
+                            .ucmd()
+                            .args(&[
+                                "--require-handler",
+                                "--signal",
+                                &(64 - i).to_string(),
+                                test_proc_comm,
+                            ])
+                            .run()
+                            .no_stdout()
+                            .no_stderr()
+                            .code_is(EXIT_NO_MATCH);
+                    } else {
+                        test_scenario
+                            .ucmd()
+                            .args(&[
+                                "--require-handler",
+                                "--signal",
+                                &(64 - i).to_string(),
+                                test_proc_comm,
+                            ])
+                            .run()
+                            .stdout_contains(test_proc.id().to_string())
+                            .no_stderr()
+                            .succeeded();
+                    }
+                }
+            } else {
+                println!("Invalid SigCgt value");
+            }
+            break;
+        }
+    }
+
+    let _ = test_proc.kill();
 }
