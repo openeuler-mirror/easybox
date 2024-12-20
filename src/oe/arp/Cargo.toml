@@ -1,0 +1,28 @@
+[package]
+name = "oe_arp"
+version = "0.0.1"
+authors = ["openeuler developers"]
+license = "MulanPSL-2.0"
+description = "arp ~ manipulate the system ARP cache"
+
+homepage = "https://gitee.com/openeuler/easybox"
+repository = "https://gitee.com/openeuler/easybox/tree/master/src/oe/arp"
+keywords = ["easybox", "net-tools", "cli", "utility"]
+categories = ["command-line-utilities"]
+edition = "2021"
+
+[lib]
+path = "src/arp.rs"
+
+[dependencies]
+clap = { version = "3.2", features = ["wrap_help", "cargo"] }
+uucore = { version = ">=0.0.16", package = "uucore", path = "../../uucore", features = [
+  "libc",
+  "net_tools",
+] }
+errno = "0.3.9"
+nix = { version = "0.27.1", features = ["ioctl"] }
+
+[[bin]]
+name = "arp"
+path = "src/main.rs"

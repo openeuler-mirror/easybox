@@ -12,13 +12,14 @@ pub mod lines;
 pub mod memo;
 #[cfg(feature = "mount")]
 pub mod mount;
+#[cfg(feature = "net_tools")]
+pub mod net_tools;
 #[cfg(feature = "pretty_float")]
 pub mod pretty_float;
 #[cfg(feature = "ringbuffer")]
 pub mod ringbuffer;
 #[cfg(feature = "memo")]
 mod tokenize;
-
 #[cfg(feature = "umount")]
 pub mod umount;
 

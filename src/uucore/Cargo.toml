@@ -72,3 +72,74 @@ pipes = ["nix"]
 pretty_float = ["libc"]
 mount = ["nix"]
 umount = ["nix"]
+net_tools = ["af_default", "hw_default"]
+
+af_default = [
+  "AFUNIX",
+  "AFINET",
+  "AFINET6",
+  "AFIPX",
+  "AFATALK",
+  "AFAX25",
+  "AFNETROM",
+  "AFROSE",
+  "AFX25",
+  "AFASH",
+]
+AFUNIX = []
+AFINET = []
+AFINET6 = []
+AFIPX = []
+AFATALK = []
+AFAX25 = []
+AFNETROM = []
+AFROSE = []
+AFX25 = []
+AFASH = []
+# * non-default features
+AFECONET = []
+AFDECnet = []
+AFBLUETOOTH = []
+
+hw_default = [
+  "HWETHER",
+  "HWARC",
+  "HWSLIP",
+  "HWPPP",
+  "HWTUNNEL",
+  #"HWAX25",
+  "HWROSE",
+  #"HWNETROM",
+  #"HWX25",
+  "HWFR",
+  "HWSIT",
+  "HWFDDI",
+  "HWHIPPI",
+  #"HWASH",
+  "HWHDLCLAPB",
+  "HWIRDA",
+  "HWEUI64",
+  "HWIB",
+]
+HWETHER = []
+HWARC = []
+HWSLIP = []
+HWPPP = []
+HWTUNNEL = []
+HWAX25 = []
+HWROSE = []
+HWNETROM = []
+HWX25 = []
+HWFR = []
+HWSIT = []
+HWFDDI = []
+HWHIPPI = []
+HWASH = []
+HWHDLCLAPB = []
+HWIRDA = []
+HWEUI64 = []
+HWIB = []
+# * non-default features
+HWSTRIP = []
+HWTR = []
+HWEC = []
