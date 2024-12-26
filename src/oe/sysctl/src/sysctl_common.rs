@@ -101,10 +101,7 @@ impl Config {
             .map(std::string::ToString::to_string)
             .collect();
 
-        let pattern: Option<String> = match options.get_one::<String>(options::PATTERN) {
-            Some(pattern) => Some(pattern.clone()),
-            None => None,
-        };
+        let pattern: Option<String> = options.get_one::<String>(options::PATTERN).cloned();
 
         let variable = options
             .get_many::<String>(options::VARIABLE)
@@ -322,11 +319,12 @@ impl SysctlSetting {
     ///
     pub fn new(key: &str, value: &str, ignore_failure: bool, glob_exclude: bool) -> Self {
         let mut path = String::from(PROC_PATH);
-        if key.starts_with("-") {
-            path.push_str(&key[1..]);
+        if let Some(stripped) = key.strip_prefix('-') {
+            path.push_str(stripped);
         } else {
             path.push_str(key);
         }
+
         slashdot(&mut path, '.', '/', PROC_PATH.len());
 
         Self {
@@ -351,10 +349,7 @@ fn strpbrk(cs: &str, ct: &str) -> Option<usize> {
 
 /// Check if a string is glob.
 fn string_is_glob(str: &str) -> bool {
-    match strpbrk(str, GLOB_CHARS) {
-        Some(_) => true,
-        None => false,
-    }
+    strpbrk(str, GLOB_CHARS).is_some()
 }
 
 /// Check if a path starts with PROC_PATH.
@@ -409,7 +404,7 @@ fn slashdot(string: &mut String, old: char, new: char, start_pos: usize) {
 }
 
 /// Check if a path is in settinglist.
-fn settinglist_findpath(setting_list: &Vec<SysctlSetting>, path: &str) -> bool {
+fn settinglist_findpath(setting_list: &[SysctlSetting], path: &str) -> bool {
     for setting in setting_list.iter() {
         if setting.path == path {
             return true;
@@ -465,7 +460,7 @@ fn read_setting(name: &str, internal_config: &InternalConfig) -> i32 {
     }
 
     if let Some(pattern) = &internal_config.pattern {
-        if !pattern_match(&out_name, &pattern) {
+        if !pattern_match(&out_name, pattern) {
             return EXIT_SUCCESS;
         }
     }
@@ -518,14 +513,12 @@ fn read_setting(name: &str, internal_config: &InternalConfig) -> i32 {
                 if internal_config.print_name {
                     print!("{} = {}", out_name, buf);
                     if !buf.ends_with('\n') {
-                        println!("");
+                        println!();
                     }
+                } else if !internal_config.print_new_line && buf.ends_with('\n') {
+                    print!("{}", buf.trim_end_matches('\n'));
                 } else {
-                    if !internal_config.print_new_line && buf.ends_with("\n") {
-                        print!("{}", buf.trim_end_matches("\n"));
-                    } else {
-                        print!("{}", buf);
-                    }
+                    print!("{}", buf);
                 }
 
                 buf.clear();
@@ -586,12 +579,12 @@ fn display_all(path: &str, internal_config: &InternalConfig) -> i32 {
         };
 
         if internal_config.ignore_deprecated
-            && is_deprecated(&entry.file_name().to_str().unwrap_or_default())
+            && is_deprecated(entry.file_name().to_str().unwrap_or_default())
         {
             continue;
         }
 
-        if is_verboten(&entry.file_name().to_str().unwrap_or_default()) {
+        if is_verboten(entry.file_name().to_str().unwrap_or_default()) {
             continue;
         }
 
@@ -671,7 +664,7 @@ fn write_setting(
             Ok(mut file) => {
                 let mut buf_to_write = String::from(value);
                 buf_to_write.push('\n');
-                match file.write(buf_to_write.as_bytes()) {
+                match file.write_all(buf_to_write.as_bytes()) {
                     Ok(_) => rc = EXIT_SUCCESS,
                     Err(_) => {
                         warn_c(&format!("setting key \"{}\"", dotted_key));
@@ -718,16 +711,12 @@ fn write_setting(
     if (rc == EXIT_SUCCESS && !internal_config.quiet) || internal_config.dry_run {
         if internal_config.name_only {
             println!("{}", dotted_key);
+        } else if internal_config.print_name {
+            println!("{} = {}", dotted_key, value);
+        } else if internal_config.print_new_line {
+            println!("{}", value);
         } else {
-            if internal_config.print_name {
-                println!("{} = {}", dotted_key, value);
-            } else {
-                if internal_config.print_new_line {
-                    println!("{}", value);
-                } else {
-                    print!("{}", value);
-                }
-            }
+            print!("{}", value);
         }
     }
 
@@ -750,7 +739,7 @@ fn parse_setting_line(
     line: &str,
     internal_config: &InternalConfig,
 ) -> Option<SysctlSetting> {
-    let setting_line = line.trim_start_matches(" ");
+    let setting_line = line.trim_start_matches(' ');
     if setting_line.len() < 2 {
         return None;
     }
@@ -760,7 +749,7 @@ fn parse_setting_line(
     }
 
     if let Some(pattern) = &internal_config.pattern {
-        if !pattern_match(setting_line, &pattern) {
+        if !pattern_match(setting_line, pattern) {
             return None;
         }
     }
@@ -777,17 +766,15 @@ fn parse_setting_line(
             key = &key[1..];
         }
         value = &value[1..];
+    } else if let Some(stripped) = setting_line.strip_prefix('-') {
+        glob_exclude = true;
+        key = stripped;
     } else {
-        if setting_line.starts_with('-') {
-            glob_exclude = true;
-            key = &setting_line[1..];
-        } else {
-            warnx_c(&format!(
-                "{}({}): invalid syntax, continuing...",
-                path, linenum
-            ));
-            return None;
-        }
+        warnx_c(&format!(
+            "{}({}): invalid syntax, continuing...",
+            path, linenum
+        ));
+        return None;
     }
 
     key = key.trim_end_matches(' ');
@@ -797,30 +784,28 @@ fn parse_setting_line(
 }
 
 /// Go through the setting list, expand and sort out setting globs and actually write the settings out.
-fn write_setting_list(setting_list: &Vec<SysctlSetting>, internal_config: &InternalConfig) -> i32 {
+fn write_setting_list(setting_list: &[SysctlSetting], internal_config: &InternalConfig) -> i32 {
     let mut rc = EXIT_SUCCESS;
 
-    for setting in setting_list.into_iter() {
+    for setting in setting_list.iter() {
         if setting.glob_exclude {
             continue;
         }
 
         if string_is_glob(&setting.path) {
             if let Ok(paths) = glob(&setting.path) {
-                for path in paths.into_iter() {
-                    if let Ok(path_buf) = path {
-                        let path_str = path_buf.to_string_lossy();
-                        if settinglist_findpath(setting_list, &path_str) {
-                            continue;
-                        }
-                        rc |= write_setting(
-                            &setting.key,
-                            &path_str,
-                            &setting.value,
-                            setting.ignore_failure,
-                            internal_config,
-                        );
+                for path_buf in paths.into_iter().flatten() {
+                    let path_str = path_buf.to_string_lossy();
+                    if settinglist_findpath(setting_list, &path_str) {
+                        continue;
                     }
+                    rc |= write_setting(
+                        &setting.key,
+                        &path_str,
+                        &setting.value,
+                        setting.ignore_failure,
+                        internal_config,
+                    );
                 }
             }
         } else {
@@ -863,39 +848,32 @@ fn preload(
         }
     };
 
-    for entry in paths {
-        if let Ok(path) = entry {
-            let fp: Box<dyn BufRead>;
+    for entry in paths.flatten() {
+        let fp: Box<dyn BufRead>;
 
-            if path.to_string_lossy() == "-" {
-                fp = Box::new(BufReader::new(std::io::stdin()));
-            } else {
-                match File::open(&path) {
-                    Ok(file) => fp = Box::new(BufReader::new(file)),
-                    Err(_) => {
-                        warn_c(&format!("cannot open \"{}\"", path.to_string_lossy()));
-                        return EXIT_FAILURE;
-                    }
+        if entry.to_string_lossy() == "-" {
+            fp = Box::new(BufReader::new(std::io::stdin()));
+        } else {
+            match File::open(&entry) {
+                Ok(file) => fp = Box::new(BufReader::new(file)),
+                Err(_) => {
+                    warn_c(&format!("cannot open \"{}\"", entry.to_string_lossy()));
+                    return EXIT_FAILURE;
                 }
             }
+        }
 
-            for line in fp.lines() {
-                if let Ok(line) = line {
-                    line_num += 1;
+        for line in fp.lines().map_while(Result::ok) {
+            line_num += 1;
 
-                    if line.len() < 2 {
-                        continue;
-                    }
+            if line.len() < 2 {
+                continue;
+            }
 
-                    if let Some(setting) = parse_setting_line(
-                        &path.to_string_lossy(),
-                        line_num,
-                        &line,
-                        internal_config,
-                    ) {
-                        setting_list.push(setting);
-                    }
-                }
+            if let Some(setting) =
+                parse_setting_line(&entry.to_string_lossy(), line_num, &line, internal_config)
+            {
+                setting_list.push(setting);
             }
         }
     }
@@ -918,15 +896,11 @@ fn preload_system(setting_list: &mut Vec<SysctlSetting>, internal_config: &Inter
 
     for dir in dirs {
         if let Ok(entries) = read_dir(dir) {
-            for entry in entries {
-                if let Ok(entry) = entry {
-                    let name = entry.file_name().to_string_lossy().to_string();
-                    if name.ends_with(".conf") {
-                        if !cfgs.clone().into_iter().any(|cfg| cfg.0 == name) {
-                            let value = entry.path().to_string_lossy().to_string();
-                            cfgs.push((name, value));
-                        }
-                    }
+            for entry in entries.flatten() {
+                let name = entry.file_name().to_string_lossy().to_string();
+                if name.ends_with(".conf") && !cfgs.clone().into_iter().any(|cfg| cfg.0 == name) {
+                    let value = entry.path().to_string_lossy().to_string();
+                    cfgs.push((name, value));
                 }
             }
         }
@@ -1010,7 +984,7 @@ pub fn handle_input(config: Config) -> UResult<()> {
     }
 
     for variable in config.variable {
-        if internal_config.write_mode || variable.find("=").is_some() {
+        if internal_config.write_mode || variable.contains('=') {
             match parse_setting_line("command line", 0, &variable, &internal_config) {
                 Some(setting) => {
                     rc |= write_setting(

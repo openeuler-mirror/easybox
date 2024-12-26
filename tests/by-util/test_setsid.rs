@@ -189,7 +189,7 @@ fn test_setsid_exit_code() {
                     }
                     test_args.extend(execvp_argv);
 
-                    let expcted_result = unwrap_or_return!(expected_result_brief(
+                    let expected_result = unwrap_or_return!(expected_result_brief(
                         C_SETSID_PATH,
                         &test_scenario,
                         &test_args
@@ -199,9 +199,9 @@ fn test_setsid_exit_code() {
                         .ucmd()
                         .args(&test_args)
                         .run()
-                        .stdout_is(expcted_result.stdout_str())
-                        .stderr_is(expcted_result.stderr_str())
-                        .code_is(expcted_result.code());
+                        .stdout_is(expected_result.stdout_str())
+                        .stderr_is(expected_result.stderr_str())
+                        .code_is(expected_result.code());
                 }
             }
         }
