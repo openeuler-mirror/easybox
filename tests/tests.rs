@@ -1,6 +1,10 @@
 #[macro_use]
 mod common;
 
+#[cfg(feature = "arp")]
+#[path = "by-util/test_arp.rs"]
+mod test_arp;
+
 #[cfg(feature = "attr")]
 #[path = "by-util/test_attr.rs"]
 mod test_attr;
