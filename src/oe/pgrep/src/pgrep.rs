@@ -11,6 +11,7 @@ use uucore::{error::UResult, help_section, help_usage};
 ///
 pub mod pgrep_common;
 pub mod process;
+pub mod signals;
 
 const ABOUT: &str = help_section!("about", "pgrep.md");
 const USAGE: &str = help_usage!("pgrep.md");
