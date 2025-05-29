@@ -123,3 +123,7 @@ mod test_useradd;
 #[cfg(feature = "find")]
 #[path = "by-util/test_find.rs"]
 mod test_find;
+
+#[cfg(feature = "less")]
+#[path = "by-util/test_less.rs"]
+mod test_less;

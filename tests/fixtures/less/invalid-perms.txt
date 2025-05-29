@@ -1,0 +1,2 @@
+wait to be set 0o244
+wait to be set 0o644
